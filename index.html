@@ -1,0 +1,2997 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Secretaria-Geral AGETRHA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* ===== VARIÁVEIS CSS ===== */
+        :root {
+            --primary: #1a4e8e;
+            --secondary: #2a6cba;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+            --natureza-ordinaria: #1a4e8e;
+            --natureza-extraordinaria: #e83e8c;
+            --natureza-direcao: #fd7e14;
+            --natureza-deliberacao: #20c997;
+        }
+        
+        /* ===== RESET E ESTILOS GERAIS ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* ===== LOADING OVERLAY ===== */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        #loading-overlay .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        #loading-overlay .fa-spinner {
+            color: var(--primary);
+            font-size: 40px;
+        }
+        
+        #loading-text {
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px 0;
+            transition: all 0.3s;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+        }
+        
+        .sidebar-menu li {
+            padding: 0;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-menu a:hover, 
+        .sidebar-menu a.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 3px solid white;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .logo-texto {
+            display: flex;
+            align-items: center;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .logo-texto img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* Pesquisa global */
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f0f2f5;
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin-right: 20px;
+        }
+        .search-box input {
+            border: none;
+            background: transparent;
+            padding: 8px;
+            width: 200px;
+            outline: none;
+        }
+        .search-box button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+        }
+        
+        /* ===== SISTEMA DE NOTIFICAÇÕES ===== */
+        .notificacoes-container {
+            position: relative;
+            margin-right: 20px;
+        }
+        
+        .btn-notificacoes {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--primary);
+            cursor: pointer;
+            position: relative;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-notificacoes:hover {
+            background-color: rgba(26, 78, 142, 0.1);
+        }
+
+        .badge-notificacoes {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .dropdown-notificacoes {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            width: 350px;
+            z-index: 1000;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .dropdown-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dropdown-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--dark);
+        }
+        
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .lista-notificacoes {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .notificacao-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .notificacao-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .notificacao-item.nao-lida {
+            background-color: rgba(26, 78, 142, 0.05);
+        }
+        
+        .notificacao-item.nao-lida:hover {
+            background-color: rgba(26, 78, 142, 0.1);
+        }
+        
+        .notificacao-icone {
+            margin-right: 12px;
+            font-size: 16px;
+            color: var(--primary);
+            margin-top: 2px;
+        }
+        
+        .notificacao-conteudo {
+            flex: 1;
+        }
+        
+        .notificacao-titulo {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+        
+        .notificacao-descricao {
+            font-size: 13px;
+            color: var(--gray);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .notificacao-tempo {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        .dropdown-footer {
+            padding: 12px 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        
+        .dropdown-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .dropdown-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            min-width: 300px;
+            max-width: 400px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-icone {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        .toast-conteudo {
+            flex: 1;
+        }
+        
+        .toast-titulo {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        
+        .toast-mensagem {
+            font-size: 13px;
+            color: var(--gray);
+        }
+        
+        .toast-fechar {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .toast.sucesso {
+            border-left-color: var(--success);
+        }
+        
+        .toast.sucesso .toast-icone {
+            color: var(--success);
+        }
+        
+        .toast.erro {
+            border-left-color: var(--danger);
+        }
+        
+        .toast.erro .toast-icone {
+            color: var(--danger);
+        }
+        
+        .toast.alerta {
+            border-left-color: var(--warning);
+        }
+        
+        .toast.alerta .toast-icone {
+            color: var(--warning);
+        }
+        
+        .toast.info {
+            border-left-color: var(--primary);
+        }
+        
+        .toast.info .toast-icone {
+            color: var(--primary);
+        }
+        
+        /* ===== CONTENT AREA ===== */
+        .content {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .page-title {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-title h1 {
+            color: var(--primary);
+            font-size: 24px;
+        }
+        
+        /* ===== BOTÕES ===== */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+        
+        .btn i {
+            margin-right: 5px;
+        }
+        
+        /* ===== CARDS ===== */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .card h3 {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+        
+        .card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .card .trend {
+            font-size: 12px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .trend.up {
+            color: var(--success);
+        }
+        
+        .trend.down {
+            color: var(--danger);
+        }
+        
+        /* ===== BARRAS DE PROGRESSO ===== */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .card-percent {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        .card-percent.up {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+        
+        .card-percent.down {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-fill.up {
+            background: linear-gradient(90deg, var(--success) 0%, #5cd85c 100%);
+        }
+        
+        .progress-fill.down {
+            background: linear-gradient(90deg, var(--danger) 0%, #ff6b6b 100%);
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--gray);
+        }
+        
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--gray);
+            margin-top: 3px;
+        }
+        
+        .progress-labels span {
+            font-weight: 600;
+        }
+        
+        /* ===== CHARTS ===== */
+        .charts {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            height: 350px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        /* ===== TABLES ===== */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background-color: var(--light);
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        tr:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+
+        /* ===== CALENDÁRIO ===== */
+        .calendar-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-header button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            padding: 10px;
+            background: var(--light);
+        }
+        .calendar-day {
+            border: 1px solid #eee;
+            padding: 10px;
+            min-height: 80px;
+            cursor: pointer;
+            position: relative;
+        }
+        .calendar-day:hover {
+            background: #f0f0f0;
+        }
+        .calendar-day .day-number {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .calendar-day .event-indicator {
+            font-size: 10px;
+            background: var(--primary);
+            color: white;
+            padding: 2px 4px;
+            border-radius: 3px;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .calendar-day.other-month {
+            opacity: 0.5;
+        }
+        .calendar-day.today {
+            background: rgba(26, 78, 142, 0.1);
+            border: 2px solid var(--primary);
+        }
+
+        /* ===== ABAS DE FILTRO ===== */
+        .tabs-filter {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .tab-btn:hover {
+            background: var(--secondary);
+            color: white;
+        }
+
+        /* ===== MODAL DE LOGIN ===== */
+        .login-modal {
+            display: flex !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-modal.hidden {
+            display: none !important;
+        }
+
+        .login-modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: modalSlideIn 0.4s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-modal-header {
+            background: var(--primary);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .login-modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-modal-header img {
+            height: 40px;
+            border-radius: 5px;
+        }
+
+        .login-modal-body {
+            padding: 30px;
+        }
+
+        .login-form-group {
+            margin-bottom: 25px;
+        }
+
+        .login-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .login-form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .login-form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 78, 142, 0.2);
+        }
+
+        .login-error-message {
+            color: var(--danger);
+            background-color: rgba(220, 53, 69, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+        }
+
+        .login-success-message {
+            color: var(--success);
+            background-color: rgba(40, 167, 69, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+        }
+
+        .login-modal-footer {
+            padding: 0 30px 30px;
+            text-align: center;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 78, 142, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== STATUS BADGES ===== */
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status.concluido, .status.Concluída { background-color: rgba(40, 167, 69, 0.1); color: var(--success); }
+        .status.pendente { background-color: rgba(255, 193, 7, 0.1); color: #b58900; }
+        .status.em-curso, .status.em-andamento, .status.Em-Curso { background-color: rgba(0, 123, 255, 0.15); color: #0056b3; }
+	.status.atrasado, .status.Vencida { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); }
+        .status.Cancelado { background-color: rgba(108, 117, 125, 0.1); color: var(--gray); }
+
+        /* Natureza badges */
+        .natureza-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .natureza-ordinaria { background-color: rgba(26, 78, 142, 0.1); color: var(--natureza-ordinaria); }
+        .natureza-extraordinaria { background-color: rgba(232, 62, 140, 0.1); color: var(--natureza-extraordinaria); }
+        .natureza-direcao { background-color: rgba(253, 126, 20, 0.1); color: var(--natureza-direcao); }
+        .natureza-deliberacao { background-color: rgba(32, 201, 151, 0.1); color: var(--natureza-deliberacao); }
+        
+        /* ===== ACTION BUTTONS ===== */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-btn.view { background-color: rgba(26, 78, 142, 0.1); color: var(--primary); }
+        .action-btn.edit { background-color: rgba(40, 167, 69, 0.1); color: var(--success); }
+        .action-btn.delete { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); }
+        .action-btn.print { background-color: rgba(255, 193, 7, 0.1); color: #b58900; }
+        
+        /* ===== FILTERS ===== */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--gray);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+        
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 992px) {
+            .sidebar { width: 70px; }
+            .sidebar-header h2, .sidebar-menu span { display: none; }
+            .sidebar-menu a { justify-content: center; padding: 15px; }
+            .sidebar-menu i { margin-right: 0; font-size: 20px; }
+        }
+        
+        @media (max-width: 768px) {
+            .cards { grid-template-columns: 1fr 1fr; }
+            .charts { grid-template-columns: 1fr; }
+            .chart-container { height: 300px; }
+            .page-title { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .page-title h1 { font-size: 20px; }
+            .btn { padding: 8px 16px; font-size: 14px; }
+            .content { padding: 15px; }
+            .form-row { grid-template-columns: 1fr; }
+            .calendar-day { min-height: 60px; }
+        }
+        
+        @media (max-width: 576px) {
+            .cards { grid-template-columns: 1fr; }
+            .top-bar { flex-direction: column; align-items: flex-start; padding: 15px; }
+            .logo-texto { margin-bottom: 15px; }
+            .action-buttons { flex-direction: column; gap: 5px; }
+            .filters { flex-direction: column; }
+            .filter-group { width: 100%; }
+        }
+
+        body.login-active .sidebar,
+        body.login-active .main-content { display: none !important; }
+    </style>
+</head>
+<body>
+
+<!-- ===== MODAL DE LOGIN ===== -->
+<div id="login-modal" class="login-modal">
+    <div class="login-modal-content">
+        <div class="login-modal-header">
+            <img src="https://i.postimg.cc/DyKZTbYq/Logotipo.jpg" alt="AGETRHA Logo">
+            <h2><span style="font-size: 28px; margin-right: 10px;">🔒</span> Acesso Restrito</h2>
+        </div>
+        <div class="login-modal-body">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h3 style="color: var(--primary); margin-bottom: 8px;">Secretaria-Geral</h3>
+                <p style="color: var(--gray); font-size: 14px;">AGETRHA - Gestão Administrativa</p>
+            </div>
+            <form id="login-form">
+                <div class="login-form-group">
+                    <label for="login-password"><i class="fas fa-key"></i> Senha de Acesso</label>
+                    <input type="password" id="login-password" class="login-form-control" placeholder="Digite a senha" autocomplete="off" required>
+                    <small style="display:block; margin-top:5px; color:var(--gray);">Presidente: presidente | Consultor: consultor | Secretário: secretario</small>
+                </div>
+                <div id="login-error-message" class="login-error-message"><i class="fas fa-exclamation-circle"></i> <span id="login-error-text"></span></div>
+                <div id="login-success-message" class="login-success-message"><i class="fas fa-check-circle"></i> Autenticação bem-sucedida!</div>
+            </form>
+        </div>
+        <div class="login-modal-footer">
+            <button id="btn-login-submit" class="btn-login" type="button"><i class="fas fa-sign-in-alt"></i> Entrar no Sistema</button>
+            <p style="margin-top: 15px; font-size: 12px; color: var(--gray);"><i class="fas fa-info-circle"></i> Acesso restrito aos membros da Secretaria-Geral</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+    <div class="sidebar-header"></div>
+    <ul class="sidebar-menu">
+        <li><a href="#" data-page="visao-geral" class="active"><i class="fas fa-tachometer-alt"></i> <span>Visão Geral</span></a></li>
+        <li><a href="#" data-page="tarefas"><i class="fas fa-tasks"></i> <span>Tarefas</span></a></li>
+        <li><a href="#" data-page="atas"><i class="fas fa-file-alt"></i> <span>Actas & Deliberações</span></a></li>
+        <li><a href="#" data-page="agenda"><i class="fas fa-calendar-alt"></i> <span>Agenda</span></a></li>
+        <li><a href="#" data-page="apoio-direcao"><i class="fas fa-chart-pie"></i> <span>Resumo Geral</span></a></li>
+        <li><a href="#" data-page="relatorios"><i class="fas fa-chart-bar"></i> <span>Relatórios / Planos</span></a></li>
+        <li><a href="#" data-page="comunicacao"><i class="fas fa-calendar-check"></i> <span>Eventos e Reuniões</span></a></li>
+        <li><a href="#" data-page="contatos"><i class="fas fa-address-book"></i> <span>Contatos</span></a></li>
+        <li><a href="#" data-page="seguranca"><i class="fas fa-shield-alt"></i> <span>Segurança / Auditoria</span></a></li>
+    </ul>
+</div>
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main-content">
+    <!-- ===== TOP BAR ===== -->
+    <div class="top-bar">
+        <div class="logo-texto">
+            <img src="https://i.postimg.cc/DyKZTbYq/Logotipo.jpg" alt="AGETRHA Logo">
+            <strong>SECRETARIA-GERAL - AGETRHA</strong>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div class="search-box">
+                <input type="text" id="global-search" placeholder="Pesquisar...">
+                <button id="btn-search"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="notificacoes-container">
+                <button id="btn-notificacoes" class="btn-notificacoes"><i class="fas fa-bell"></i><span id="badge-notificacoes" class="badge-notificacoes">0</span></button>
+                <div id="dropdown-notificacoes" class="dropdown-notificacoes">
+                    <div class="dropdown-header">
+                        <h3>Notificações</h3>
+                        <div>
+                            <button id="btn-marcar-todas-lidas" class="btn-text">Marcar todas como lidas</button>
+                            <button id="btn-verificar-notificacoes" class="btn-text" style="margin-left: 10px;"><i class="fas fa-sync-alt"></i> Verificar</button>
+                        </div>
+                    </div>
+                    <div id="lista-notificacoes" class="lista-notificacoes"></div>
+                    <div class="dropdown-footer"><a href="#" id="btn-ver-todas-notificacoes">Ver todas</a></div>
+                </div>
+            </div>
+            <div class="user-info">
+                <div>
+                    <div style="font-weight: 600;" id="user-name">Diarde Ganga</div>
+                    <div style="font-size: 12px; color: var(--gray);" id="user-role">Secretário-Geral</div>
+                </div>
+                <button id="btn-logout" class="btn-text" style="margin-left:10px;"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CONTENT AREA ===== -->
+    <div class="content">
+        <!-- Visão Geral -->
+        <div id="visao-geral-content" style="display: block;">
+            <div class="page-title">
+                <h1><i class="fas fa-tachometer-alt"></i> Visão Geral da Gestão Administrativa</h1>
+                <div>
+                    <button class="btn btn-primary" id="btn-personalizar-kpis"><i class="fas fa-sliders-h"></i> Personalizar KPIs</button>
+                    <button class="btn btn-success" id="btn-exportar-pdf"><i class="fas fa-download"></i> Exportar Resumo</button>
+                </div>
+            </div>
+            <div class="cards" id="kpi-cards"></div>
+            <div class="charts">
+                <div class="chart-container">
+                    <div class="chart-title">Evolução do Cumprimento de Prazos</div>
+                    <canvas id="evolucaoPrazosChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Distribuição de Tarefas por Departamento</div>
+                    <canvas id="tarefasDepartamentoChart"></canvas>
+                </div>
+            </div>
+            <div class="table-container">
+                <h3 style="margin-bottom: 15px;">Eventos e Reuniões</h3>
+                <table>
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Responsável</th><th>Status</th></tr></thead>
+                    <tbody id="tabela-prazos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tarefas -->
+        <div id="tarefas-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-tasks"></i> Gestão de Tarefas</h1>
+                <button class="btn btn-primary" id="btn-nova-tarefa-avancada"><i class="fas fa-plus"></i> Nova Tarefa</button>
+            </div>
+            <div class="filters">
+                <div class="filter-group"><label>Prioridade</label><select class="form-control" id="filter-tarefa-prioridade"><option value="">Todas</option><option>Alta</option><option>Média</option><option>Baixa</option></select></div>
+                <div class="filter-group"><label>Status</label><select class="form-control" id="filter-tarefa-status"><option value="">Todos</option><option>Pendente</option><option>Em Curso</option><option>Concluída</option></select></div>
+                <div><button class="btn btn-primary" id="btn-filtrar-tarefas">Aplicar</button></div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Título</th><th>Prioridade</th><th>Data Limite</th><th>Responsável</th><th>Status</th><th>Acções</th></tr></thead>
+                    <tbody id="tabela-tarefas"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Atas e Deliberações -->
+        <div id="atas-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-file-alt"></i> Gestão de Actas e Deliberações</h1>
+                <button class="btn btn-primary" id="btn-nova-ata"><i class="fas fa-plus"></i> Nova Acta</button>
+            </div>
+            <div class="filters">
+                <div class="filter-group"><label>Órgão</label><select class="form-control" id="filter-orgao"><option value="">Todos</option><option>Reunião da Direcção</option><option>Assembleia Geral</option><option>Ass.Ger. Extraordinária</option><option>Deliberação</option></select></div>
+                <div class="filter-group"><label>Estado</label><select class="form-control" id="filter-estado-ata"><option value="">Todos</option><option>Pendente</option><option>Em curso</option><option>Concluído</option></select></div>
+                <div><button class="btn btn-primary" id="btn-filtrar-atas">Aplicar</button></div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Nr Acta</th><th>Data Reunião</th><th>Natureza</th><th>Ordem de Trabalho</th><th>Registro</th><th>Acções</th></tr></thead>
+                    <tbody id="tabela-atas"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Agenda (Antiga Agenda e Reuniões) -->
+        <div id="agenda-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-calendar-alt"></i> Agenda da Direcção</h1>
+                <button class="btn btn-primary" id="btn-novo-prazo"><i class="fas fa-plus"></i> Acções</button>
+            </div>
+            
+            <!-- Calendário -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="calendar-prev-month"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="calendar-month-year"></h3>
+                    <button id="calendar-next-month"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid" id="calendar-days-header"></div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+            
+            <!-- Abas de filtro para Acções -->
+            <div class="tabs-filter">
+                <button class="tab-btn active" data-filter="all">Todas</button>
+                <button class="tab-btn" data-filter="Vencida">Vencidas</button>
+                <button class="tab-btn" data-filter="Em Curso">Em Curso</button>
+                <button class="tab-btn" data-filter="Concluída">Concluídas</button>
+                <button class="tab-btn" data-filter="Cancelado">Canceladas</button>
+            </div>
+            
+            <div class="table-container">
+                <h3>Controlo de Acções</h3>
+                <table>
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Recorrência</th><th>Responsável</th><th>Status</th><th>Acções</th></tr></thead>
+                    <tbody id="tabela-acoes"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Resumo Geral (antiga Apoio à Direcção) -->
+        <div id="apoio-direcao-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-chart-pie"></i> Resumo Geral</h1>
+                <button class="btn btn-primary" id="btn-novo-processo"><i class="fas fa-plus"></i> Novo Processo</button>
+            </div>
+            <div class="cards" id="resumo-cards">
+                <div class="card"><h3>SALDO ACTUAL</h3><div class="value" id="saldo-actual">0 Kz</div></div>
+                <div class="card"><h3>DESPESA TOTAL</h3><div class="value" id="despesa-total">0 Kz</div></div>
+                <div class="card"><h3>TOTAL DE MEMBROS</h3><div class="value" id="total-membros">0</div></div>
+                <div class="card"><h3>INADIMPLENTES</h3><div class="value" id="inadimplentes">0</div></div>
+                <div class="card"><h3>MEMBROS REGULARES</h3><div class="value" id="membros-regulares">0</div></div>
+            </div>
+            
+            <div class="charts" style="grid-template-columns: 1fr 1fr;">
+                <div class="chart-container">
+                    <div class="chart-title">Evolução Financeira</div>
+                    <canvas id="evolucaoFinanceiraChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Evolução de Membros</div>
+                    <canvas id="evolucaoMembrosChart"></canvas>
+                </div>
+            </div>
+            <div class="charts" style="grid-template-columns: 1fr 1fr;">
+                <div class="chart-container">
+                    <div class="chart-title">Distribuição de Receitas vs Despesas</div>
+                    <canvas id="pizzaFinanceiroChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Membros por Categoria</div>
+                    <canvas id="pizzaMembrosChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <h3>Processos em Curso</h3>
+                <table>
+                    <thead><tr><th>Processo</th><th>Etapa</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Acções</th></tr></thead>
+                    <tbody id="tabela-processos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Relatórios e Planos de Trabalho -->
+        <div id="relatorios-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-chart-bar"></i> Relatórios de Actividades e Planos de Trabalho</h1>
+                <div>
+                    <button class="btn btn-primary" id="btn-novo-relatorio"><i class="fas fa-plus"></i> Novo Relatório/Plano</button>
+                    <button class="btn btn-success" id="btn-exportar-relatorio"><i class="fas fa-download"></i> Exportar PDF</button>
+                </div>
+            </div>
+            <div class="cards">
+                <div class="card"><h3>PLANOS ANUAIS</h3><div class="value" id="qtd-planos-anuais">0</div></div>
+                <div class="card"><h3>RELATÓRIOS TRIMESTRAIS</h3><div class="value" id="qtd-relatorios-trimestrais">0</div></div>
+                <div class="card"><h3>EXECUÇÃO MÉDIA</h3><div class="value" id="execucao-media">0%</div></div>
+            </div>
+            <div class="table-container">
+                <table><thead><tr><th>Nr</th><th>Título</th><th>Tipo</th><th>Período</th><th>Estado Execução</th><th>Acções</th></tr></thead>
+                <tbody id="tabela-relatorios-planos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Eventos e Reuniões (Antiga página comunicação) -->
+        <div id="comunicacao-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-calendar-check"></i> Eventos e Reuniões</h1>
+                <button class="btn btn-primary" id="btn-novo-evento"><i class="fas fa-plus"></i> +Novo Evento</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Data de Registro</th>
+                            <th>Data de Realização</th>
+                            <th>Data Finda</th>
+                            <th>Descrição</th>
+                            <th>Convidados</th>
+                            <th>Acções</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-eventos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Contatos -->
+        <div id="contatos-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-address-book"></i> Contatos Institucionais</h1>
+                <button class="btn btn-primary" id="btn-novo-contato"><i class="fas fa-plus"></i> Novo Contato</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Nome</th><th>Instituição</th><th>Cargo</th><th>Telefone</th><th>Email</th><th>Acções</th></tr></thead>
+                    <tbody id="tabela-contatos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Segurança / Auditoria -->
+        <div id="seguranca-content" style="display: none;">
+            <div class="page-title">
+                <h1><i class="fas fa-shield-alt"></i> Segurança e Auditoria de Acessos</h1>
+            </div>
+            <div class="table-container">
+                <h3>Registo de acessos recentes (últimos 100)</h3>
+                <table><thead><tr><th>Usuário</th><th>Data/Hora</th><th>Ação</th><th>IP</th></tr></thead>
+                <tbody id="tabela-acessos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL DE EVENTO ===== -->
+<div id="modal-evento" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-evento-titulo">Novo Evento</h2>
+            <button class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-evento">
+                <input type="hidden" id="evento-id" value="">
+                <div class="form-group"><label>Nome *</label><input type="text" id="evento-nome" class="form-control" required></div>
+                <div class="form-group"><label>Tipo de evento</label><input type="text" id="evento-tipo" class="form-control" placeholder="Ex: Seminário, Reunião, Workshop"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Data de Registro</label><input type="date" id="evento-data-registro" class="form-control"></div>
+                    <div class="form-group"><label>Data de Realização</label><input type="date" id="evento-data-realizacao" class="form-control"></div>
+                </div>
+                <div class="form-group"><label>Data Finda (encerramento)</label><input type="date" id="evento-data-finda" class="form-control"></div>
+                <div class="form-group"><label>Descrição</label><textarea id="evento-descricao" class="form-control" rows="3"></textarea></div>
+                <div class="form-group"><label>Convidados</label><input type="text" id="evento-convidados" class="form-control" placeholder="Nomes ou emails, separados por vírgula"></div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="fecharModal('modal-evento')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-salvar-evento">Salvar Evento</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL DE TAREFA (CRIAÇÃO/EDIÇÃO) ===== -->
+<div id="modal-tarefa-avancada" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-tarefa-titulo">Nova Tarefa</h2>
+            <button class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-tarefa">
+                <input type="hidden" id="tarefa-id" value="">
+                <div class="form-group"><label>Título *</label><input type="text" id="tarefa-titulo" class="form-control" required></div>
+                <div class="form-group"><label>Descrição</label><textarea id="tarefa-descricao" class="form-control" rows="3"></textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Prioridade</label><select id="tarefa-prioridade" class="form-control"><option>Alta</option><option>Média</option><option>Baixa</option></select></div>
+                    <div class="form-group"><label>Data Limite</label><input type="date" id="tarefa-data" class="form-control"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Responsável</label><input type="text" id="tarefa-responsavel" class="form-control" value="Secretaria"></div>
+                    <div class="form-group"><label>Status *</label><select id="tarefa-status" class="form-control" required>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Em Curso">Em Curso</option>
+                        <option value="Concluída">Concluída</option>
+                    </select></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="fecharModal('modal-tarefa-avancada')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-salvar-tarefa">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL DE DETALHES/VISUALIZAÇÃO DE TAREFA ===== -->
+<div id="modal-detalhes-tarefa" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Detalhes da Tarefa</h2>
+            <button class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="detalhes-tarefa-conteudo"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="fecharModal('modal-detalhes-tarefa')">Fechar</button>
+            <button class="btn btn-primary" id="btn-editar-detalhes-tarefa">Editar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL DE ACTA ===== -->
+<div id="modal-ata" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-ata-titulo">Nova Acta</h2>
+            <button class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-ata">
+                <input type="hidden" id="ata-id" value="">
+                <div class="form-group">
+                    <label>Nr da acta *</label>
+                    <input type="text" id="ata-nr" class="form-control" required placeholder="Ex: 001/2025">
+                </div>
+                <div class="form-group">
+                    <label>Data da Reunião *</label>
+                    <input type="date" id="ata-data" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Total de Participantes *</label>
+                    <input type="number" id="ata-participantes" class="form-control" required min="1">
+                </div>
+                <div class="form-group">
+                    <label>Ordem de Trabalho *</label>
+                    <input type="text" id="ata-ordem" class="form-control" required placeholder="Tópicos da reunião">
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="ata-descricao" class="form-control" rows="4" placeholder="Resumo da acta..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Acta Redigida por *</label>
+                    <input type="text" id="ata-redigida" class="form-control" required placeholder="Nome do redator" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas">
+                </div>
+                <div class="form-group">
+                    <label>Natureza *</label>
+                    <select id="ata-natureza" class="form-control" required>
+                        <option value="">Selecione...</option>
+                        <option value="Ass.Ger. Ordinária">Ass.Ger. Ordinária</option>
+                        <option value="Ass.Ger. Extraordinária">Ass.Ger. Extraordinária</option>
+			<option value="Reunião da Direcção">Reunião da Direcção</option>
+                        <option value="Deliberação">Deliberação</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Registro (Data automática)</label>
+                    <input type="text" id="ata-registro" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Anexo PDF</label>
+                    <input type="file" id="ata-anexo" class="form-control" accept=".pdf">
+                    <small>Carregue o documento PDF da acta</small>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="fecharModal('modal-ata')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-salvar-ata">Salvar Acta</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL DE ACÇÃO (ANTIGO PRAZO) ===== -->
+<div id="modal-acao" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-acao-titulo">Nova Acção</h2>
+            <button class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-acao">
+                <input type="hidden" id="acao-id" value="">
+                <div class="form-group"><label>Descrição *</label><input type="text" id="acao-descricao" class="form-control" required></div>
+                <div class="form-group"><label>Data *</label><input type="date" id="acao-data" class="form-control" required></div>
+                <div class="form-group"><label>Recorrência</label><select id="acao-recorrencia" class="form-control"><option>Não</option><option>Diária</option><option>Semanal</option><option>Mensal</option></select></div>
+                <div class="form-group"><label>Responsável</label><input type="text" id="acao-responsavel" class="form-control"></div>
+                <div class="form-group"><label>Status *</label><select id="acao-status" class="form-control" required>
+                    <option value="Em Curso">Em Curso</option>
+                    <option value="Vencida">Vencida</option>
+                    <option value="Concluída">Concluída</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select></div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="fecharModal('modal-acao')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-salvar-acao">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para visualização de acção -->
+<div id="modal-detalhes-acao" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Detalhes da Acção</h2>
+            <button class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="detalhes-acao-conteudo"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="fecharModal('modal-detalhes-acao')">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Relatório/Plano -->
+<div id="modal-relatorio" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-relatorio-titulo">Novo Relatório/Plano</h2>
+            <button class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-relatorio">
+                <input type="hidden" id="relatorio-id" value="">
+                <div class="form-group">
+                    <label>Nr de Relatório/Plano *</label>
+                    <input type="text" id="relatorio-nr" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Título *</label>
+                    <input type="text" id="relatorio-titulo" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Data de Registro</label>
+                    <input type="text" id="relatorio-data-registro" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="relatorio-descricao" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Autor *</label>
+                    <input type="text" id="relatorio-autor" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Anexo PDF</label>
+                    <input type="file" id="relatorio-anexo" class="form-control" accept=".pdf">
+                </div>
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select id="relatorio-tipo" class="form-control" required>
+                        <option value="Plano Anual">Plano Anual</option>
+                        <option value="Relatório Trimestral">Relatório Trimestral</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Período *</label>
+                    <input type="text" id="relatorio-periodo" class="form-control" placeholder="Ex: 2025 ou Jan-Mar 2025" required>
+                </div>
+                <div class="form-group">
+                    <label>Estado de Execução</label>
+                    <select id="relatorio-estado" class="form-control">
+                        <option value="Em curso">Em curso</option>
+                        <option value="Concluído">Concluído</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="fecharModal('modal-relatorio')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-salvar-relatorio">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Demais modais existentes -->
+<div id="modal-contato" class="modal"><div class="modal-content"><div class="modal-header"><h2>Novo Contato</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body"><form id="form-contato"><div class="form-group"><label>Nome</label><input type="text" id="contato-nome" class="form-control"></div><div class="form-group"><label>Instituição</label><input type="text" id="contato-instituicao" class="form-control"></div><div class="form-group"><label>Cargo</label><input type="text" id="contato-cargo" class="form-control"></div><div class="form-group"><label>Telefone</label><input type="text" id="contato-telefone" class="form-control"></div><div class="form-group"><label>Email</label><input type="email" id="contato-email" class="form-control"></div></form></div><div class="modal-footer"><button class="btn" onclick="fecharModal('modal-contato')">Cancelar</button><button class="btn btn-primary" id="btn-salvar-contato">Salvar</button></div></div></div>
+<div id="modal-processo" class="modal"><div class="modal-content"><div class="modal-header"><h2>Novo Processo</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body"><form id="form-processo"><div class="form-group"><label>Nome do Processo</label><input type="text" id="processo-nome" class="form-control"></div><div class="form-group"><label>Etapa</label><input type="text" id="processo-etapa" class="form-control"></div><div class="form-group"><label>Responsável</label><input type="text" id="processo-responsavel" class="form-control"></div><div class="form-group"><label>Prazo</label><input type="date" id="processo-prazo" class="form-control"></div></form></div><div class="modal-footer"><button class="btn" onclick="fecharModal('modal-processo')">Cancelar</button><button class="btn btn-primary" id="btn-salvar-processo">Salvar</button></div></div></div>
+<div id="modal-pesquisa" class="modal"><div class="modal-content"><div class="modal-header"><h2>Resultados da Pesquisa</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body" id="resultados-pesquisa"></div></div></div>
+<div id="modal-kpis" class="modal"><div class="modal-content"><div class="modal-header"><h2>Personalizar KPIs</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body" id="kpis-opcoes"></div><div class="modal-footer"><button class="btn btn-primary" id="btn-salvar-kpis">Salvar</button></div></div></div>
+
+<script>
+    // ===== CONFIGURAÇÃO INICIAL =====
+    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycby2ltPn7bJdRordhgGfZ8baD_ouRsyrXcB8nmCm2qyfAYI3FYVfcFlGMCmBkhuDaVZo/exec';
+    let isAuthenticated = false;
+    let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
+    let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
+
+    let tarefas = JSON.parse(localStorage.getItem('sg_tarefas')) || [];
+    let contatos = JSON.parse(localStorage.getItem('sg_contatos')) || [];
+    let processos = JSON.parse(localStorage.getItem('sg_processos')) || [];
+    let acoes = JSON.parse(localStorage.getItem('sg_acoes')) || []; // substitui prazos
+    let eventos = JSON.parse(localStorage.getItem('sg_eventos')) || [];
+    let atas = JSON.parse(localStorage.getItem('sg_atas')) || [];
+    let relatoriosPlanos = JSON.parse(localStorage.getItem('sg_relatorios_planos')) || [];
+    let acessos = JSON.parse(localStorage.getItem('sg_acessos')) || [];
+
+    let kpisVisiveis = JSON.parse(localStorage.getItem('sg_kpis')) || ['tarefas', 'prazos', 'reunioes', 'deliberacoes'];
+
+    // Estado do calendário
+    let currentCalendarDate = new Date();
+    let reunioesCalendario = []; // será preenchido pelo GAS
+
+    // Dados mockados para Resumo Geral (finanças e membros)
+    let dadosFinanceiros = JSON.parse(localStorage.getItem('sg_financeiro')) || {
+        saldo: 1250000,
+        despesaTotal: 450000,
+        receitas: [800000, 850000, 900000, 950000],
+        despesas: [400000, 420000, 450000, 480000]
+    };
+    let dadosMembros = JSON.parse(localStorage.getItem('sg_membros')) || {
+        total: 250,
+        categorias: {
+            'Sócio Efectivo': 150,
+            'Sócio Aderente': 50,
+            'Sócio Colectivo': 30,
+            'Sócio Honorário': 10,
+            'Sócio Correspondente': 10
+        },
+        inadimplentes: 20,
+        regulares: 230
+    };
+
+    // Funções de autenticação
+    function mostrarModalLogin() { document.getElementById('login-modal').classList.remove('hidden'); document.body.classList.add('login-active'); }
+    function esconderModalLogin() { document.getElementById('login-modal').classList.add('hidden'); document.body.classList.remove('login-active'); }
+    async function validarSenha(senha) { 
+        if (senha === 'presidente') return { success: true, valid: true, role: 'presidente', nome: 'Presidente' }; 
+        if (senha === 'secretario') return { success: true, valid: true, role: 'secretario', nome: 'Dr. António Joaquim' }; 
+        if (senha === 'consultor') return { success: true, valid: true, role: 'consultor', nome: 'Consultor' }; 
+        return { success: true, valid: false }; 
+    }
+    async function fazerLogin() {
+  const senha = document.getElementById('login-password').value.trim();
+  if (!senha) {
+    mostrarErroLogin('Insira a senha');
+    return;
+  }
+
+  try {
+    const resposta = await fetch(AUTH_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', senha: senha })
+    });
+
+    const dados = await resposta.json();
+
+    if (dados.sucesso) {
+      // Guardar token e dados do utilizador
+      authToken = dados.token;
+      currentUser = { nome: dados.nome, role: dados.role };
+
+      // Persistir a sessão no browser (opcional, para evitar login a cada refresh)
+      sessionStorage.setItem('sg_authenticated', 'true');
+      sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
+      sessionStorage.setItem('sg_token', authToken);
+
+      mostrarSucessoLogin();
+      setTimeout(() => {
+        esconderModalLogin();
+        inicializarSistema();
+      }, 1000);
+    } else {
+      mostrarErroLogin(dados.erro || 'Senha incorreta!');
+    }
+  } catch (erro) {
+    console.error('Erro ao contactar o servidor:', erro);
+    mostrarErroLogin('Erro de conexão. Verifique a rede.');
+  }
+}
+    function mostrarErroLogin(msg) { document.getElementById('login-error-text').innerText = msg; document.getElementById('login-error-message').style.display = 'block'; document.getElementById('login-success-message').style.display = 'none'; }
+    function mostrarSucessoLogin() { document.getElementById('login-error-message').style.display = 'none'; document.getElementById('login-success-message').style.display = 'block'; }
+    
+function verificarSessao() {
+  const auth = sessionStorage.getItem('sg_authenticated') === 'true';
+  if (auth) {
+    const user = sessionStorage.getItem('sg_user');
+    const token = sessionStorage.getItem('sg_token');
+    if (user) currentUser = JSON.parse(user);
+    if (token) authToken = token;
+  }
+  return auth && authToken !== null;
+}
+
+async function fetchGAS(action, extraData = {}) {
+  try {
+    const payload = { action, token: authToken, ...extraData };
+    const resposta = await fetch(AUTH_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const dados = await resposta.json();
+    if (dados.erro) {
+      console.error('Erro GAS (' + action + '):', dados.erro);
+      mostrarToast('Erro', dados.erro, 'erro');
+    }
+    return dados;
+  } catch (erro) {
+    console.error('Falha de rede (' + action + '):', erro);
+    mostrarToast('Erro de conexão', 'Não foi possível contactar o servidor.', 'erro');
+    return { erro: erro.message };
+  }
+}
+
+    function aplicarPermissoes() { 
+        const role = currentUser.role; 
+        // Exibe todas as páginas para presidente e secretario; consultor vê tudo mas com permissões reduzidas
+        document.querySelectorAll('.sidebar-menu a').forEach(link => { 
+            link.style.display = 'flex'; 
+        }); 
+        document.getElementById('user-name').innerText = currentUser.nome; 
+        let roleDisplay = role === 'presidente' ? 'Presidente' : (role === 'consultor' ? 'Consultor' : 'Secretário-Geral');
+        document.getElementById('user-role').innerText = roleDisplay;
+        
+        // Ocultar botões de criar/editar/excluir para consultor
+        if (role === 'consultor') {
+            document.querySelectorAll('.btn-primary, .btn-success, .btn-warning, .btn-danger').forEach(btn => {
+                if (!btn.id.includes('exportar') && !btn.id.includes('view') && !btn.id.includes('print')) {
+                    btn.style.display = 'none';
+                }
+            });
+            // Esconder botões de ação de editar/excluir nas tabelas (será feito dinamicamente na renderização)
+        } else {
+            document.querySelectorAll('.btn-primary, .btn-success, .btn-warning, .btn-danger').forEach(btn => btn.style.display = 'inline-flex');
+        }
+    }
+
+    // Registrar acesso
+    function registrarAcesso(usuario, acao) {
+        const acesso = {
+            usuario: usuario,
+            dataHora: new Date().toLocaleString('pt-PT'),
+            acao: acao,
+            ip: '192.168.1.' + Math.floor(Math.random() * 255)
+        };
+        acessos.push(acesso);
+        if (acessos.length > 100) acessos.shift();
+        localStorage.setItem('sg_acessos', JSON.stringify(acessos));
+        carregarAcessos();
+    }
+
+    async function carregarAcessos() {
+  const tbody = document.getElementById('tabela-acessos');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">A carregar...</td></tr>';
+
+  const resposta = await fetchGAS('getAcessos');
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Erro ao carregar acessos</td></tr>';
+    return;
+  }
+  const acessos = resposta;        // array devolvido pela API
+  window.acessos = acessos;        // atualiza a variável global (se ainda for usada)
+
+  tbody.innerHTML = acessos.map(a => `
+    <tr>
+      <td>${a.usuario}</td>
+      <td>${a.dataHora}</td>
+      <td>${a.acao}</td>
+      <td>${a.ip || '-'}</td>
+    </tr>
+  `).join('');
+}
+
+async function carregarKPIs() {
+  const resposta = await fetchGAS('getKPIs');
+  if (!resposta.erro && resposta.kpis) {
+    kpisVisiveis = resposta.kpis;
+    atualizarKPIs(); // redesena os cards com as preferências guardadas
+  }
+}
+
+    // Notificações
+    function inicializarNotificacoes() {
+        const btn = document.getElementById('btn-notificacoes');
+        const dropdown = document.getElementById('dropdown-notificacoes');
+        btn.addEventListener('click', () => dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block');
+        document.addEventListener('click', (e) => { if (!btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none'; });
+        
+        document.getElementById('btn-marcar-todas-lidas').addEventListener('click', async () => {
+  const resposta = await fetchGAS('markNotificacoesLidas');
+  if (resposta.sucesso) {
+    mostrarToast('Notificações', 'Todas marcadas como lidas', 'sucesso');
+    carregarNotificacoes(); // recarrega a lista com os estados atualizados
+  }
+});
+        
+        document.getElementById('btn-verificar-notificacoes').addEventListener('click', async () => {
+  await carregarNotificacoes();
+  mostrarToast('Atualizado', 'Notificações verificadas', 'info');
+});
+        
+        carregarNotificacoes();
+    }
+    
+    async function carregarNotificacoes() {
+  const lista = document.getElementById('lista-notificacoes');
+  const badge = document.getElementById('badge-notificacoes');
+  if (!lista || !badge) return;
+
+  lista.innerHTML = '<div style="padding:20px; text-align:center;">A carregar…</div>';
+
+  const resposta = await fetchGAS('getNotificacoes');
+  if (resposta.erro) {
+    lista.innerHTML = '<div style="padding:20px; text-align:center;">Erro ao carregar</div>';
+    return;
+  }
+
+  const notificacoes = resposta;         // array vindo do GAS
+  window.notificacoes = notificacoes;    // guarda na variável global (ainda declarada no topo)
+
+  const naoLidas = notificacoes.filter(n => !n.lida).length;
+  badge.innerText = naoLidas;
+  badge.style.display = naoLidas > 0 ? 'flex' : 'none';
+
+  if (notificacoes.length === 0) {
+    lista.innerHTML = '<div style="padding:20px; text-align:center;">Nenhuma notificação</div>';
+    return;
+  }
+
+  const notificacoesOrdenadas = [...notificacoes].reverse();
+  lista.innerHTML = notificacoesOrdenadas.map(n => `
+    <div class="notificacao-item ${n.lida ? '' : 'nao-lida'}">
+      <div class="notificacao-icone"><i class="fas fa-info-circle"></i></div>
+      <div class="notificacao-conteudo">
+        <div class="notificacao-titulo">${n.titulo}</div>
+        <div class="notificacao-descricao">${n.mensagem}</div>
+        <div class="notificacao-tempo">${n.dataCriacao ? new Date(n.dataCriacao).toLocaleString() : 'Agora'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+    
+    function adicionarNotificacao(titulo, mensagem) {
+        notificacoes.push({ titulo, mensagem, lida: false, data: new Date().toISOString() });
+        localStorage.setItem('notificacoes_sg', JSON.stringify(notificacoes));
+        carregarNotificacoes();
+        mostrarToast(titulo, mensagem, 'info');
+    }
+    
+    function mostrarToast(titulo, mensagem, tipo = 'info') {
+        const container = document.querySelector('.toast-container') || (() => { const div = document.createElement('div'); div.className = 'toast-container'; document.body.appendChild(div); return div; })();
+        const toast = document.createElement('div'); toast.className = `toast ${tipo}`;
+        toast.innerHTML = `<div class="toast-icone"><i class="fas ${tipo === 'sucesso' ? 'fa-check-circle' : tipo === 'erro' ? 'fa-exclamation-circle' : tipo === 'alerta' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i></div><div class="toast-conteudo"><div class="toast-titulo">${titulo}</div><div class="toast-mensagem">${mensagem}</div></div><button class="toast-fechar">&times;</button>`;
+        container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10);
+        toast.querySelector('.toast-fechar').addEventListener('click', () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); });
+        setTimeout(() => { if (toast.parentNode) { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); } }, 5000);
+    }
+
+    // Gráficos
+    let graficosInicializados = false;
+    let chartInstances = {};
+    
+    function inicializarGraficos() {
+        if (graficosInicializados) return;
+        const ctx1 = document.getElementById('evolucaoPrazosChart')?.getContext('2d');
+        const ctx2 = document.getElementById('tarefasDepartamentoChart')?.getContext('2d');
+        if (!ctx1 || !ctx2) return;
+        chartInstances.evolucaoPrazos = new Chart(ctx1, { type: 'line', data: { labels: ['Sem1', 'Sem2', 'Sem3', 'Sem4'], datasets: [{ label: 'Tarefas concluídas', data: [4, 6, 5, 8], borderColor: '#1a4e8e' }] } });
+        chartInstances.tarefasDepartamento = new Chart(ctx2, { type: 'doughnut', data: { labels: ['Projetos', 'Administração', 'Comunicação'], datasets: [{ data: [45, 30, 25], backgroundColor: ['#1a4e8e','#28a745','#ffc107'] }] }, options: { cutout: '70%', layout: { padding: 30 }, plugins: { legend: { position: 'bottom' } } } });
+        graficosInicializados = true;
+    }
+
+    // Gráficos do Resumo Geral
+    function inicializarGraficosResumo() {
+        // Evolução Financeira
+        const ctxFin = document.getElementById('evolucaoFinanceiraChart')?.getContext('2d');
+        if (ctxFin) {
+            if (chartInstances.evolucaoFinanceira) chartInstances.evolucaoFinanceira.destroy();
+            chartInstances.evolucaoFinanceira = new Chart(ctxFin, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr'],
+                    datasets: [
+                        { label: 'Receitas', data: dadosFinanceiros.receitas, borderColor: '#28a745', backgroundColor: 'transparent' },
+                        { label: 'Despesas', data: dadosFinanceiros.despesas, borderColor: '#dc3545', backgroundColor: 'transparent' }
+                    ]
+                }
+            });
+        }
+        
+        // Evolução de Membros
+        const ctxMembros = document.getElementById('evolucaoMembrosChart')?.getContext('2d');
+        if (ctxMembros) {
+            if (chartInstances.evolucaoMembros) chartInstances.evolucaoMembros.destroy();
+            // Dados mockados de evolução
+            chartInstances.evolucaoMembros = new Chart(ctxMembros, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr'],
+                    datasets: [
+                        { label: 'Sócio Efectivo', data: [140, 145, 148, 150], borderColor: '#1a4e8e' },
+                        { label: 'Sócio Aderente', data: [45, 47, 49, 50], borderColor: '#e83e8c' },
+                        { label: 'Sócio Colectivo', data: [28, 29, 30, 30], borderColor: '#fd7e14' },
+                        { label: 'Sócio Honorário', data: [10, 10, 10, 10], borderColor: '#20c997' },
+                        { label: 'Sócio Correspondente', data: [8, 9, 10, 10], borderColor: '#6c757d' }
+                    ]
+                }
+            });
+        }
+        
+        // Pizza Financeiro
+        const ctxPizzaFin = document.getElementById('pizzaFinanceiroChart')?.getContext('2d');
+        if (ctxPizzaFin) {
+            if (chartInstances.pizzaFinanceiro) chartInstances.pizzaFinanceiro.destroy();
+            const totalReceitas = dadosFinanceiros.receitas.reduce((a,b) => a+b, 0);
+            const totalDespesas = dadosFinanceiros.despesas.reduce((a,b) => a+b, 0);
+            chartInstances.pizzaFinanceiro = new Chart(ctxPizzaFin, {
+                type: 'pie',
+                data: {
+                    labels: ['Receitas', 'Despesas'],
+                    datasets: [{ data: [totalReceitas, totalDespesas], backgroundColor: ['#28a745', '#dc3545'] }]
+                }
+            });
+        }
+        
+        // Pizza Membros
+        const ctxPizzaMembros = document.getElementById('pizzaMembrosChart')?.getContext('2d');
+        if (ctxPizzaMembros) {
+            if (chartInstances.pizzaMembros) chartInstances.pizzaMembros.destroy();
+            const categorias = dadosMembros.categorias;
+            chartInstances.pizzaMembros = new Chart(ctxPizzaMembros, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(categorias),
+                    datasets: [{ data: Object.values(categorias), backgroundColor: ['#1a4e8e','#e83e8c','#fd7e14','#20c997','#6c757d'] }]
+                }
+            });
+        }
+    }
+
+    function atualizarCardsResumo() {
+        document.getElementById('saldo-actual').innerText = dadosFinanceiros.saldo.toLocaleString() + ' Kz';
+        document.getElementById('despesa-total').innerText = dadosFinanceiros.despesaTotal.toLocaleString() + ' Kz';
+        document.getElementById('total-membros').innerText = dadosMembros.total;
+        document.getElementById('inadimplentes').innerText = dadosMembros.inadimplentes;
+        document.getElementById('membros-regulares').innerText = dadosMembros.regulares;
+    }
+
+
+async function carregarReunioesCalendario() {
+  const resposta = await fetchGAS('getCalendario');
+  if (!resposta.erro) {
+    reunioesCalendario = resposta;
+    renderizarCalendario(); // redesena o calendário com os novos dados
+  }
+}
+
+    // Navegação
+    function alternarPagina(pagina) {
+        const secoes = ['visao-geral-content','tarefas-content','atas-content','agenda-content','apoio-direcao-content','relatorios-content','comunicacao-content','contatos-content','seguranca-content'];
+        secoes.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+        document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+        const alvo = document.getElementById(pagina + '-content'); if (alvo) alvo.style.display = 'block';
+        const activeLink = document.querySelector(`[data-page="${pagina}"]`); if (activeLink) activeLink.classList.add('active');
+        if (pagina === 'comunicacao') carregarEventos();
+        if (pagina === 'atas') carregarAtas();
+        if (pagina === 'agenda') { renderizarCalendario(); carregarAcoes(); }
+        if (pagina === 'apoio-direcao') { atualizarCardsResumo(); inicializarGraficosResumo(); }
+        if (pagina === 'relatorios') carregarRelatoriosPlanos();
+        if (pagina === 'seguranca') carregarAcessos();
+    }
+
+    // Tarefas
+    async function carregarTarefas() {
+  const tbody = document.getElementById('tabela-tarefas');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">A carregar...</td></tr>';
+
+  const resposta = await fetchGAS('getTarefas');
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar tarefas</td></tr>';
+    return;
+  }
+  const tarefas = resposta; // a API retorna um array diretamente
+  window.tarefas = tarefas;
+const isConsultor = currentUser.role === 'consultor';
+
+  tbody.innerHTML = tarefas.map(t => `
+    <tr>
+      <td>${t.titulo}</td>
+      <td><span class="status ${t.prioridade === 'Alta' ? 'atrasado' : 'pendente'}">${t.prioridade}</span></td>
+      <td>${t.dataLimite || '-'}</td>
+      <td>${t.responsavel}</td>
+      <td><span class="status ${t.status === 'Concluída' ? 'concluido' : (t.status === 'Em Curso' ? 'em-andamento' : 'pendente')}">${t.status}</span></td>
+      <td class="action-buttons">
+        <button class="action-btn view" onclick="verTarefa(${t.id})"><i class="fas fa-eye"></i></button>
+        ${!isConsultor ? `
+        <button class="action-btn edit" onclick="editarTarefa(${t.id})"><i class="fas fa-edit"></i></button>
+        <button class="action-btn delete" onclick="excluirTarefa(${t.id})"><i class="fas fa-trash"></i></button>
+        ` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+    function verTarefa(id) {
+        const tarefa = tarefas.find(t => t.id === id);
+        if (!tarefa) return;
+        
+        const conteudo = document.getElementById('detalhes-tarefa-conteudo');
+        conteudo.innerHTML = `
+            <div style="display:grid; gap:15px;">
+                <div><strong>Título:</strong> ${tarefa.titulo}</div>
+                <div><strong>Descrição:</strong> ${tarefa.descricao || 'N/A'}</div>
+                <div><strong>Prioridade:</strong> ${tarefa.prioridade}</div>
+                <div><strong>Data Limite:</strong> ${tarefa.dataLimite || 'N/A'}</div>
+                <div><strong>Responsável:</strong> ${tarefa.responsavel}</div>
+                <div><strong>Status:</strong> ${tarefa.status}</div>
+            </div>
+        `;
+        
+        document.getElementById('btn-editar-detalhes-tarefa').onclick = () => {
+            fecharModal('modal-detalhes-tarefa');
+            editarTarefa(id);
+        };
+        if (currentUser.role === 'consultor') document.getElementById('btn-editar-detalhes-tarefa').style.display = 'none';
+        
+        document.getElementById('modal-detalhes-tarefa').style.display = 'flex';
+    }
+
+    function editarTarefa(id) {
+        if (currentUser.role === 'consultor') return;
+        const tarefa = tarefas.find(t => t.id === id);
+        if (!tarefa) return;
+        
+        document.getElementById('modal-tarefa-titulo').innerText = 'Editar Tarefa';
+        document.getElementById('tarefa-id').value = tarefa.id;
+        document.getElementById('tarefa-titulo').value = tarefa.titulo;
+        document.getElementById('tarefa-descricao').value = tarefa.descricao || '';
+        document.getElementById('tarefa-prioridade').value = tarefa.prioridade;
+        document.getElementById('tarefa-data').value = tarefa.dataLimite || '';
+        document.getElementById('tarefa-responsavel').value = tarefa.responsavel;
+        document.getElementById('tarefa-status').value = tarefa.status;
+        
+        document.getElementById('modal-tarefa-avancada').style.display = 'flex';
+    }
+
+    async function excluirTarefa(id) {
+  if (currentUser.role === 'consultor') return;
+  if (!confirm('Excluir tarefa?')) return;
+
+  const resposta = await fetchGAS('deleteTarefa', { id: id });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'Tarefa excluída', 'sucesso');
+    carregarTarefas(); // recarrega a tabela com os dados atualizados
+  }
+}
+
+    async function salvarTarefa() {
+  if (currentUser.role === 'consultor') return;
+
+  const id = document.getElementById('tarefa-id').value;
+  const novaTarefa = {
+    id: id ? parseInt(id) : null,   // será null se for criação
+    titulo: document.getElementById('tarefa-titulo').value,
+    descricao: document.getElementById('tarefa-descricao').value,
+    prioridade: document.getElementById('tarefa-prioridade').value,
+    dataLimite: document.getElementById('tarefa-data').value,
+    responsavel: document.getElementById('tarefa-responsavel').value,
+    status: document.getElementById('tarefa-status').value
+  };
+
+  if (!novaTarefa.titulo) { alert('Título obrigatório'); return; }
+
+  const resposta = await fetchGAS('saveTarefa', { tarefa: novaTarefa });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', id ? 'Tarefa atualizada' : 'Tarefa criada', 'sucesso');
+    fecharModal('modal-tarefa-avancada');
+    carregarTarefas(); // recarrega a lista atualizada
+    document.getElementById('tarefa-id').value = '';
+  }
+}
+
+    // Atas
+    async function carregarAtas() {
+  const tbody = document.getElementById('tabela-atas');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">A carregar...</td></tr>';
+
+  const resposta = await fetchGAS('getAtas');
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar atas</td></tr>';
+    return;
+  }
+  const atas = resposta;         // a API retorna o array de atas
+  window.atas = atas;            // guarda na variável global (já declarada no topo)
+
+  const isConsultor = currentUser.role === 'consultor';
+  tbody.innerHTML = atas.map(a => `
+    <tr>
+      <td>${a.nr}</td>
+      <td>${a.dataReuniao}</td>
+      <td><span class="natureza-badge ${getNaturezaClass(a.natureza)}">${a.natureza}</span></td>
+      <td>${a.ordem}</td>
+      <td>${a.registro}</td>
+      <td class="action-buttons">
+        <button class="action-btn view" onclick="verAta(${a.id})"><i class="fas fa-eye"></i></button>
+        ${a.anexo ? `<button class="action-btn print" onclick="imprimirAnexoAta(${a.id})"><i class="fas fa-print"></i></button>` : ''}
+        ${!isConsultor ? `<button class="action-btn delete" onclick="excluirAta(${a.id})"><i class="fas fa-trash"></i></button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+    function getNaturezaClass(natureza) {
+        if (natureza.includes('Ordinária')) return 'natureza-ordinaria';
+        if (natureza.includes('Extraordinária')) return 'natureza-extraordinaria';
+        if (natureza.includes('Direcção')) return 'natureza-direcao';
+        if (natureza.includes('Deliberação')) return 'natureza-deliberacao';
+        return '';
+    }
+
+    function abrirModalAta(editMode = false, ata = null) {
+        if (currentUser.role === 'consultor') return;
+        document.getElementById('modal-ata-titulo').innerText = editMode ? 'Editar Acta' : 'Nova Acta';
+        document.getElementById('ata-id').value = ata ? ata.id : '';
+        document.getElementById('ata-nr').value = ata ? ata.nr : '';
+        document.getElementById('ata-data').value = ata ? ata.dataReuniao : '';
+        document.getElementById('ata-participantes').value = ata ? ata.participantes : '';
+        document.getElementById('ata-ordem').value = ata ? ata.ordem : '';
+        document.getElementById('ata-descricao').value = ata ? ata.descricao : '';
+        document.getElementById('ata-redigida').value = ata ? ata.redigida : '';
+        document.getElementById('ata-natureza').value = ata ? ata.natureza : '';
+        document.getElementById('ata-registro').value = ata ? ata.registro : new Date().toLocaleDateString('pt-PT');
+        document.getElementById('ata-anexo').value = ''; // Limpa o input file
+        document.getElementById('modal-ata').style.display = 'flex';
+    }
+
+    async function salvarAta() {
+  if (currentUser.role === 'consultor') return;
+
+  const id = document.getElementById('ata-id').value;
+  const fileInput = document.getElementById('ata-anexo');
+  const ata = {
+    id: id ? parseInt(id) : null,
+    nr: document.getElementById('ata-nr').value,
+    dataReuniao: document.getElementById('ata-data').value,
+    participantes: document.getElementById('ata-participantes').value,
+    ordem: document.getElementById('ata-ordem').value,
+    descricao: document.getElementById('ata-descricao').value,
+    redigida: document.getElementById('ata-redigida').value,
+    natureza: document.getElementById('ata-natureza').value,
+    registro: document.getElementById('ata-registro').value
+  };
+
+  // Validações (mantidas as mesmas)
+  if (!ata.nr) { alert('Número da acta obrigatório'); return; }
+  if (!ata.dataReuniao) { alert('Data da reunião obrigatória'); return; }
+  if (!ata.participantes || isNaN(ata.participantes) || ata.participantes < 1) { alert('Total de participantes deve ser um número válido'); return; }
+  if (!ata.ordem) { alert('Ordem de trabalho obrigatória'); return; }
+  if (!ata.redigida) { alert('Acta redigida por é obrigatório'); return; }
+  if (!/^[A-Za-zÀ-ÿ\s]+$/.test(ata.redigida)) { alert('Nome do redator deve conter apenas letras'); return; }
+  if (!ata.natureza) { alert('Natureza obrigatória'); return; }
+
+  let payload = { action: 'saveAta', ata: ata };
+
+  // Se houver um anexo novo, converte para base64 e inclui no payload
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    if (file.type !== 'application/pdf') {
+      alert('Apenas arquivos PDF são permitidos.');
+      return;
+    }
+    try {
+      const base64 = await fileToBase64(file);
+      payload.anexoBase64 = base64.split(',')[1]; // remove o prefixo "data:application/pdf;base64,"
+      payload.anexoNome = file.name;
+    } catch (erro) {
+      alert('Erro ao processar o arquivo PDF.');
+      return;
+    }
+  }
+
+  const resposta = await fetchGAS('saveAta', payload);
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', id ? 'Acta atualizada' : 'Acta criada', 'sucesso');
+    fecharModal('modal-ata');
+    carregarAtas(); // recarrega a lista
+  }
+}
+
+// Função auxiliar: converte um File em base64 (Promise)
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+    function verAta(id) {
+        const ata = atas.find(a => a.id === id);
+        if (!ata) return;
+        let info = `Acta ${ata.nr}\nData: ${ata.dataReuniao}\nParticipantes: ${ata.participantes}\nOrdem: ${ata.ordem}\nNatureza: ${ata.natureza}`;
+        if (ata.anexo) info += `\nAnexo: ${ata.anexo.nome}`;
+        alert(info);
+    }
+
+    function imprimirAnexoAta(id) {
+        const ata = atas.find(a => a.id === id);
+        if (!ata || !ata.anexo) {
+            alert('Nenhum anexo disponível para impressão.');
+            return;
+        }
+        // Abrir PDF em nova janela para impressão
+        const win = window.open('', '_blank');
+        win.document.write(`<iframe src="${ata.anexo.dados}" width="100%" height="100%" style="border:none;"></iframe>`);
+        win.document.title = ata.anexo.nome;
+    }
+
+    async function excluirAta(id) {
+  if (currentUser.role === 'consultor') return;
+  if (!confirm('Excluir esta acta?')) return;
+
+  const resposta = await fetchGAS('deleteAta', { id: id });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'Acta excluída', 'sucesso');
+    carregarAtas(); // recarrega a tabela atualizada
+  }
+}
+
+    // Calendário
+    function renderizarCalendario() {
+        const year = currentCalendarDate.getFullYear();
+        const month = currentCalendarDate.getMonth();
+        
+        document.getElementById('calendar-month-year').innerText = new Intl.DateTimeFormat('pt-PT', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
+        
+        // Cabeçalho dias da semana
+        const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const headerDiv = document.getElementById('calendar-days-header');
+        headerDiv.innerHTML = diasSemana.map(d => `<div class="calendar-day-header">${d}</div>`).join('');
+        
+        // Dias do mês
+        const primeiroDia = new Date(year, month, 1);
+        const ultimoDia = new Date(year, month + 1, 0);
+        const diasNoMes = ultimoDia.getDate();
+        const diaInicio = primeiroDia.getDay(); // 0 = Domingo
+        
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        
+        // Dias do mês anterior
+        const ultimoDiaMesAnterior = new Date(year, month, 0).getDate();
+        for (let i = diaInicio - 1; i >= 0; i--) {
+            const dia = ultimoDiaMesAnterior - i;
+            const date = new Date(year, month - 1, dia);
+            const dayDiv = criarDiaCalendario(date, dia, true);
+            grid.appendChild(dayDiv);
+        }
+        
+        // Dias do mês atual
+        for (let dia = 1; dia <= diasNoMes; dia++) {
+            const date = new Date(year, month, dia);
+            const dayDiv = criarDiaCalendario(date, dia, false);
+            grid.appendChild(dayDiv);
+        }
+        
+        // Completar grade com dias do próximo mês se necessário
+        const totalCelas = 42; // 6 semanas
+        const diasRestantes = totalCelas - grid.children.length;
+        for (let i = 1; i <= diasRestantes; i++) {
+            const date = new Date(year, month + 1, i);
+            const dayDiv = criarDiaCalendario(date, i, true);
+            grid.appendChild(dayDiv);
+        }
+    }
+    
+    function criarDiaCalendario(date, dia, otherMonth) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day' + (otherMonth ? ' other-month' : '');
+        
+        const hoje = new Date();
+        if (date.toDateString() === hoje.toDateString()) {
+            div.classList.add('today');
+        }
+        
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.innerText = dia;
+        div.appendChild(dayNumber);
+        
+        // Verificar reuniões agendadas para este dia
+        const dataStr = date.toISOString().split('T')[0];
+        const reunioesDoDia = reunioesCalendario.filter(r => r.data === dataStr);
+        reunioesDoDia.forEach(reuniao => {
+            const indicator = document.createElement('div');
+            indicator.className = 'event-indicator';
+            indicator.innerText = reuniao.titulo.substring(0, 15);
+            div.appendChild(indicator);
+        });
+        
+        div.addEventListener('click', () => {
+            // Abrir modal para agendar reunião (apenas se não for consultor)
+            if (currentUser.role !== 'consultor') agendarReuniao(date);
+        });
+        
+        return div;
+    }
+    
+    async function agendarReuniao(date) {
+  if (currentUser.role === 'consultor') return;
+
+  const titulo = prompt('Título da reunião:');
+  if (!titulo) return;
+
+  const dataStr = date.toISOString().split('T')[0];
+  const resposta = await fetchGAS('saveReuniao', {
+    reuniao: { data: dataStr, titulo: titulo }
+  });
+
+  if (resposta.sucesso) {
+    mostrarToast('Reunião agendada', titulo + ' em ' + dataStr, 'sucesso');
+    // Recarrega as reuniões do servidor e redesenha o calendário
+    await carregarReunioesCalendario();
+  }
+}
+
+    // Acções (antigos prazos)
+    async function carregarAcoes(filtroStatus = 'all') {
+  const tbody = document.getElementById('tabela-acoes');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">A carregar...</td></tr>';
+
+  // Enviar filtro opcional como segundo argumento do fetchGAS
+  const extraData = filtroStatus !== 'all' ? { filtroStatus } : {};
+  const resposta = await fetchGAS('getAcoes', extraData);
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar ações</td></tr>';
+    return;
+  }
+  const acoes = resposta;
+  window.acoes = acoes; // guarda na variável global
+
+  const isConsultor = currentUser.role === 'consultor';
+  tbody.innerHTML = acoes.map(a => `
+    <tr>
+      <td>${a.data}</td>
+      <td>${a.descricao}</td>
+      <td>${a.recorrencia}</td>
+      <td>${a.responsavel}</td>
+      <td><span class="status ${a.status.replace(' ', '-')}">${a.status}</span></td>
+      <td class="action-buttons">
+        <button class="action-btn view" onclick="verAcao(${a.id})"><i class="fas fa-eye"></i></button>
+        ${!isConsultor ? `
+        <button class="action-btn edit" onclick="editarAcao(${a.id})"><i class="fas fa-edit"></i></button>
+        <button class="action-btn delete" onclick="excluirAcao(${a.id})"><i class="fas fa-trash"></i></button>
+        ` : ''}
+      </td>
+    </tr>
+  `).join('');
+
+  // Atualizar abas ativas (mantém o mesmo comportamento)
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.filter === filtroStatus) btn.classList.add('active');
+  });
+}
+
+    function verAcao(id) {
+        const acao = acoes.find(a => a.id === id);
+        if (!acao) return;
+        
+        const conteudo = document.getElementById('detalhes-acao-conteudo');
+        conteudo.innerHTML = `
+            <div style="display:grid; gap:15px;">
+                <div><strong>Descrição:</strong> ${acao.descricao}</div>
+                <div><strong>Data:</strong> ${acao.data}</div>
+                <div><strong>Recorrência:</strong> ${acao.recorrencia}</div>
+                <div><strong>Responsável:</strong> ${acao.responsavel}</div>
+                <div><strong>Status:</strong> ${acao.status}</div>
+            </div>
+        `;
+        document.getElementById('modal-detalhes-acao').style.display = 'flex';
+    }
+
+    function abrirModalAcao(editMode = false, acao = null) {
+        if (currentUser.role === 'consultor') return;
+        document.getElementById('modal-acao-titulo').innerText = editMode ? 'Editar Acção' : 'Nova Acção';
+        document.getElementById('acao-id').value = acao ? acao.id : '';
+        document.getElementById('acao-descricao').value = acao ? acao.descricao : '';
+        document.getElementById('acao-data').value = acao ? acao.data : '';
+        document.getElementById('acao-recorrencia').value = acao ? acao.recorrencia : 'Não';
+        document.getElementById('acao-responsavel').value = acao ? acao.responsavel : '';
+        document.getElementById('acao-status').value = acao ? acao.status : 'Em Curso';
+        document.getElementById('modal-acao').style.display = 'flex';
+    }
+
+    async function salvarAcao() {
+  if (currentUser.role === 'consultor') return;
+
+  const id = document.getElementById('acao-id').value;
+  const novaAcao = {
+    id: id ? parseInt(id) : null,
+    data: document.getElementById('acao-data').value,
+    descricao: document.getElementById('acao-descricao').value,
+    recorrencia: document.getElementById('acao-recorrencia').value,
+    responsavel: document.getElementById('acao-responsavel').value,
+    status: document.getElementById('acao-status').value
+  };
+
+  if (!novaAcao.descricao || !novaAcao.data) {
+    alert('Descrição e data obrigatórios');
+    return;
+  }
+
+  const resposta = await fetchGAS('saveAcao', { acao: novaAcao });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', id ? 'Ação atualizada' : 'Ação criada', 'sucesso');
+    fecharModal('modal-acao');
+    carregarAcoes(); // recarrega a tabela com os dados frescos
+  }
+}
+
+    function editarAcao(id) {
+        if (currentUser.role === 'consultor') return;
+        const acao = acoes.find(a => a.id == id);
+        if (acao) abrirModalAcao(true, acao);
+    }
+
+    async function excluirAcao(id) {
+  if (currentUser.role === 'consultor') return;
+  if (!confirm('Excluir esta acção?')) return;
+
+  const resposta = await fetchGAS('deleteAcao', { id: id });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'Ação excluída', 'sucesso');
+    carregarAcoes(); // recarrega a tabela com os dados atualizados
+  }
+}
+
+    // Eventos
+    async function carregarEventos() {
+  const tbody = document.getElementById('tabela-eventos');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">A carregar...</td></tr>';
+
+  const resposta = await fetchGAS('getEventos');
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Erro ao carregar eventos</td></tr>';
+    return;
+  }
+  const eventos = resposta;        // a API retorna o array de eventos
+  window.eventos = eventos;        // guarda na variável global
+
+  const isConsultor = currentUser.role === 'consultor';
+  tbody.innerHTML = eventos.map(e => `
+    <tr>
+      <td>${e.nome}</td>
+      <td>${e.tipo || '-'}</td>
+      <td>${e.dataRegistro || '-'}</td>
+      <td>${e.dataRealizacao || '-'}</td>
+      <td>${e.dataFinda || '-'}</td>
+      <td>${e.descricao ? e.descricao.substring(0, 40) : '-'}</td>
+      <td>${e.convidados || '-'}</td>
+      <td class="action-buttons">
+        <button class="action-btn view" onclick="verEvento(${e.id})"><i class="fas fa-eye"></i></button>
+        ${!isConsultor ? `
+        <button class="action-btn edit" onclick="editarEvento(${e.id})"><i class="fas fa-edit"></i></button>
+        <button class="action-btn delete" onclick="excluirEvento(${e.id})"><i class="fas fa-trash"></i></button>
+        ` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+    function verEvento(id) {
+        const evento = eventos.find(e => e.id == id);
+        if (!evento) return;
+        alert(`Nome: ${evento.nome}\nTipo: ${evento.tipo}\nData Realização: ${evento.dataRealizacao}\nDescrição: ${evento.descricao}\nConvidados: ${evento.convidados}`);
+    }
+
+    function editarEvento(id) {
+        if (currentUser.role === 'consultor') return;
+        const evento = eventos.find(e => e.id == id);
+        if (evento) abrirModalEvento(true, evento);
+    }
+
+    function abrirModalEvento(editMode = false, evento = null) {
+        if (currentUser.role === 'consultor') return;
+        document.getElementById('modal-evento-titulo').innerText = editMode ? 'Editar Evento' : 'Novo Evento';
+        document.getElementById('evento-id').value = evento ? evento.id : '';
+        document.getElementById('evento-nome').value = evento ? evento.nome : '';
+        document.getElementById('evento-tipo').value = evento ? evento.tipo : '';
+        document.getElementById('evento-data-registro').value = evento ? evento.dataRegistro : '';
+        document.getElementById('evento-data-realizacao').value = evento ? evento.dataRealizacao : '';
+        document.getElementById('evento-data-finda').value = evento ? evento.dataFinda : '';
+        document.getElementById('evento-descricao').value = evento ? evento.descricao : '';
+        document.getElementById('evento-convidados').value = evento ? evento.convidados : '';
+        document.getElementById('modal-evento').style.display = 'flex';
+    }
+
+    async function salvarEvento() {
+  if (currentUser.role === 'consultor') return;
+
+  const id = document.getElementById('evento-id').value;
+  const novoEvento = {
+    id: id ? parseInt(id) : null,
+    nome: document.getElementById('evento-nome').value,
+    tipo: document.getElementById('evento-tipo').value,
+    dataRegistro: document.getElementById('evento-data-registro').value,
+    dataRealizacao: document.getElementById('evento-data-realizacao').value,
+    dataFinda: document.getElementById('evento-data-finda').value,
+    descricao: document.getElementById('evento-descricao').value,
+    convidados: document.getElementById('evento-convidados').value
+  };
+
+  if (!novoEvento.nome) { alert('O campo Nome é obrigatório.'); return; }
+
+  const resposta = await fetchGAS('saveEvento', { evento: novoEvento });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', id ? 'Evento atualizado' : 'Evento criado', 'sucesso');
+    fecharModal('modal-evento');
+    carregarEventos();   // recarrega a lista de eventos
+    // Se a página de agenda estiver aberta, atualiza o calendário
+    if (document.getElementById('agenda-content').style.display !== 'none') {
+      carregarCalendario(); // precisaremos adaptar, mas por enquanto chama a original
+    }
+  }
+}
+
+    async function excluirEvento(id) {
+  if (currentUser.role === 'consultor') return;
+  if (!confirm('Deseja excluir este evento?')) return;
+
+  const resposta = await fetchGAS('deleteEvento', { id: id });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'Evento excluído', 'sucesso');
+    carregarEventos(); // recarrega a tabela de eventos
+  }
+}
+
+    // Relatórios e Planos
+    async function carregarRelatoriosPlanos() {
+  const tbody = document.getElementById('tabela-relatorios-planos');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">A carregar...</td></tr>';
+
+  const resposta = await fetchGAS('getRelatorios');
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar relatórios</td></tr>';
+    return;
+  }
+  const relatoriosPlanos = resposta;          // array retornado pela API
+  window.relatoriosPlanos = relatoriosPlanos;  // atualiza a variável global
+
+  const isConsultor = currentUser.role === 'consultor';
+  tbody.innerHTML = relatoriosPlanos.map(r => `
+    <tr>
+      <td>${r.nr}</td>
+      <td>${r.titulo}</td>
+      <td>${r.tipo}</td>
+      <td>${r.periodo}</td>
+      <td><span class="status ${r.estado === 'Concluído' ? 'concluido' : 'em-curso'}">${r.estado}</span></td>
+      <td class="action-buttons">
+        <button class="action-btn view" onclick="verRelatorio(${r.id})"><i class="fas fa-eye"></i></button>
+        ${r.anexo ? `<button class="action-btn print" onclick="imprimirAnexoRelatorio(${r.id})"><i class="fas fa-print"></i></button>` : ''}
+        ${!isConsultor ? `<button class="action-btn delete" onclick="excluirRelatorio(${r.id})"><i class="fas fa-trash"></i></button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+
+  // Atualizar os cards de resumo (planos anuais, trimestrais, execução média)
+  const planosAnuais = relatoriosPlanos.filter(r => r.tipo === 'Plano Anual').length;
+  const relatoriosTrim = relatoriosPlanos.filter(r => r.tipo === 'Relatório Trimestral').length;
+  const execucaoMedia = relatoriosPlanos.length ? Math.round((relatoriosPlanos.filter(r => r.estado === 'Concluído').length / relatoriosPlanos.length) * 100) : 0;
+  document.getElementById('qtd-planos-anuais').innerText = planosAnuais;
+  document.getElementById('qtd-relatorios-trimestrais').innerText = relatoriosTrim;
+  document.getElementById('execucao-media').innerText = execucaoMedia + '%';
+}
+
+    function abrirModalRelatorio(editMode = false, relatorio = null) {
+        if (currentUser.role === 'consultor') return;
+        document.getElementById('modal-relatorio-titulo').innerText = editMode ? 'Editar Relatório/Plano' : 'Novo Relatório/Plano';
+        document.getElementById('relatorio-id').value = relatorio ? relatorio.id : '';
+        document.getElementById('relatorio-nr').value = relatorio ? relatorio.nr : '';
+        document.getElementById('relatorio-titulo').value = relatorio ? relatorio.titulo : '';
+        document.getElementById('relatorio-data-registro').value = relatorio ? relatorio.dataRegistro : new Date().toLocaleDateString('pt-PT');
+        document.getElementById('relatorio-descricao').value = relatorio ? relatorio.descricao : '';
+        document.getElementById('relatorio-autor').value = relatorio ? relatorio.autor : '';
+        document.getElementById('relatorio-tipo').value = relatorio ? relatorio.tipo : 'Plano Anual';
+        document.getElementById('relatorio-periodo').value = relatorio ? relatorio.periodo : '';
+        document.getElementById('relatorio-estado').value = relatorio ? relatorio.estado : 'Em curso';
+        document.getElementById('relatorio-anexo').value = '';
+        document.getElementById('modal-relatorio').style.display = 'flex';
+    }
+
+    async function salvarRelatorio() {
+  if (currentUser.role === 'consultor') return;
+
+  const id = document.getElementById('relatorio-id').value;
+  const fileInput = document.getElementById('relatorio-anexo');
+
+  const rel = {
+    id: id ? parseInt(id) : null,
+    nr: document.getElementById('relatorio-nr').value,
+    titulo: document.getElementById('relatorio-titulo').value,
+    dataRegistro: document.getElementById('relatorio-data-registro').value,
+    descricao: document.getElementById('relatorio-descricao').value,
+    autor: document.getElementById('relatorio-autor').value,
+    tipo: document.getElementById('relatorio-tipo').value,
+    periodo: document.getElementById('relatorio-periodo').value,
+    estado: document.getElementById('relatorio-estado').value
+  };
+
+  // Validações
+  if (!rel.nr || !rel.titulo || !rel.autor || !rel.periodo) {
+    alert('Preencha os campos obrigatórios.');
+    return;
+  }
+
+  let payload = { action: 'saveRelatorio', relatorio: rel };
+
+  // Se houver um novo anexo, converte para base64 e inclui no payload
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    if (file.type !== 'application/pdf') {
+      alert('Apenas arquivos PDF são permitidos.');
+      return;
+    }
+    try {
+      const base64 = await fileToBase64(file);
+      payload.anexoBase64 = base64.split(',')[1];
+      payload.anexoNome = file.name;
+    } catch (erro) {
+      alert('Erro ao processar o arquivo PDF.');
+      return;
+    }
+  }
+
+  const resposta = await fetchGAS('saveRelatorio', payload);
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', id ? 'Relatório atualizado' : 'Relatório criado', 'sucesso');
+    fecharModal('modal-relatorio');
+    carregarRelatoriosPlanos();
+  }
+}
+
+    function verRelatorio(id) {
+        const rel = relatoriosPlanos.find(r => r.id === id);
+        if (!rel) return;
+        alert(`Nr: ${rel.nr}\nTítulo: ${rel.titulo}\nData Registro: ${rel.dataRegistro}\nAutor: ${rel.autor}\nTipo: ${rel.tipo}\nPeríodo: ${rel.periodo}\nEstado: ${rel.estado}\nDescrição: ${rel.descricao}`);
+    }
+
+    function imprimirAnexoRelatorio(id) {
+        const rel = relatoriosPlanos.find(r => r.id === id);
+        if (!rel || !rel.anexo) { alert('Sem anexo'); return; }
+        const win = window.open('', '_blank');
+        win.document.write(`<iframe src="${rel.anexo.dados}" width="100%" height="100%"></iframe>`);
+    }
+
+    async function excluirRelatorio(id) {
+  if (currentUser.role === 'consultor') return;
+  if (!confirm('Excluir este relatório/plano?')) return;
+
+  const resposta = await fetchGAS('deleteRelatorio', { id: id });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'Relatório excluído', 'sucesso');
+    carregarRelatoriosPlanos(); // recarrega a lista
+  }
+}
+
+    // Outras funções
+    async function carregarContatos() {
+  const tbody = document.getElementById('tabela-contatos');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">A carregar...</td></tr>';
+
+  const resposta = await fetchGAS('getContatos');
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar contatos</td></tr>';
+    return;
+  }
+  const contatos = resposta;         // array de contatos vindo do GAS
+  window.contatos = contatos;        // atualiza a variável global
+
+  const isConsultor = currentUser.role === 'consultor';
+  tbody.innerHTML = contatos.map(c => `
+    <tr>
+      <td>${c.nome}</td>
+      <td>${c.instituicao}</td>
+      <td>${c.cargo}</td>
+      <td>${c.telefone}</td>
+      <td>${c.email}</td>
+      <td class="action-buttons">
+        ${!isConsultor ? '<button class="action-btn edit"><i class="fas fa-edit"></i></button>' : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+    
+    async function carregarProcessos() {
+  const tbody = document.getElementById('tabela-processos');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">A carregar...</td></tr>';
+
+  const resposta = await fetchGAS('getProcessos');
+  if (resposta.erro) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar processos</td></tr>';
+    return;
+  }
+  const processos = resposta;    // array de processos vindo do GAS
+  window.processos = processos;  // atualiza a variável global
+
+  const isConsultor = currentUser.role === 'consultor';
+  tbody.innerHTML = processos.map(p => `
+    <tr>
+      <td>${p.nome}</td>
+      <td>${p.etapa}</td>
+      <td>${p.responsavel}</td>
+      <td>${p.prazo}</td>
+      <td><span class="status em-curso">${p.status}</span></td>
+      <td>${!isConsultor ? '<button class="action-btn edit"><i class="fas fa-edit"></i></button>' : ''}</td>
+    </tr>
+  `).join('');
+}
+
+    function atualizarKPIs() {
+        const cardsContainer = document.getElementById('kpi-cards');
+        const cardsHtml = {
+            tarefas: `<div class="card"><h3>TAREFAS PENDENTES</h3><div class="value">${tarefas.filter(t => t.status !== 'Concluída').length}</div></div>`,
+            prazos: `<div class="card"><h3>ACÇÕES EM CURSO</h3><div class="value">${acoes.filter(a => a.status === 'Em Curso').length}</div></div>`,
+            reunioes: `<div class="card"><h3>REUNIÕES AGENDADAS</h3><div class="value">${reunioesCalendario.length}</div></div>`,
+            deliberacoes: `<div class="card"><h3>DELIBERAÇÕES</h3><div class="value">${atas.filter(a => a.natureza === 'Deliberação').length}</div></div>`
+        };
+        cardsContainer.innerHTML = kpisVisiveis.map(k => cardsHtml[k] || '').join('');
+    }
+
+    function pesquisar(termo) {
+        termo = termo.toLowerCase();
+        let resultados = [];
+        tarefas.forEach(t => { if (t.titulo.toLowerCase().includes(termo)) resultados.push({ tipo: 'Tarefa', titulo: t.titulo }); });
+        const modal = document.getElementById('modal-pesquisa');
+        document.getElementById('resultados-pesquisa').innerHTML = resultados.length ? resultados.map(r => `<div><strong>${r.tipo}:</strong> ${r.titulo}</div>`).join('') : '<p>Nenhum resultado</p>';
+        modal.style.display = 'flex';
+    }
+
+    function fecharModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    // Inicialização principal
+    function inicializarSistema() {
+        aplicarPermissoes();
+        inicializarNotificacoes();
+        inicializarGraficos();
+        carregarTarefas();
+        carregarContatos();
+        carregarProcessos();
+        carregarAcoes();
+        carregarEventos();
+        carregarAtas();
+        carregarRelatoriosPlanos();
+        carregarAcessos();
+	carregarKPIs();
+        atualizarKPIs();
+        atualizarCardsResumo();
+	carregarReunioesCalendario();
+	
+        
+        if (document.getElementById('agenda-content').style.display !== 'none') {
+            renderizarCalendario();
+        }
+        if (document.getElementById('apoio-direcao-content').style.display !== 'none') {
+            inicializarGraficosResumo();
+        }
+
+        document.querySelectorAll('.sidebar-menu a').forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); alternarPagina(item.dataset.page); }); });
+
+        document.getElementById('btn-nova-tarefa-avancada').addEventListener('click', () => {
+            if (currentUser.role === 'consultor') return;
+            document.getElementById('modal-tarefa-titulo').innerText = 'Nova Tarefa';
+            document.getElementById('tarefa-id').value = '';
+            document.getElementById('form-tarefa').reset();
+            document.getElementById('tarefa-responsavel').value = 'Secretaria';
+            document.getElementById('modal-tarefa-avancada').style.display = 'flex';
+        });
+        
+        document.getElementById('btn-novo-contato').addEventListener('click', () => { if (currentUser.role !== 'consultor') document.getElementById('modal-contato').style.display = 'flex'; });
+        document.getElementById('btn-novo-processo').addEventListener('click', () => { if (currentUser.role !== 'consultor') document.getElementById('modal-processo').style.display = 'flex'; });
+        document.getElementById('btn-novo-prazo').addEventListener('click', () => abrirModalAcao(false, null));
+        document.getElementById('btn-personalizar-kpis').addEventListener('click', () => {
+            document.getElementById('modal-kpis').style.display = 'flex';
+            document.getElementById('kpis-opcoes').innerHTML = `
+                <label><input type="checkbox" value="tarefas" ${kpisVisiveis.includes('tarefas') ? 'checked' : ''}> Tarefas</label><br>
+                <label><input type="checkbox" value="prazos" ${kpisVisiveis.includes('prazos') ? 'checked' : ''}> Acções</label><br>
+                <label><input type="checkbox" value="reunioes" ${kpisVisiveis.includes('reunioes') ? 'checked' : ''}> Reuniões</label><br>
+                <label><input type="checkbox" value="deliberacoes" ${kpisVisiveis.includes('deliberacoes') ? 'checked' : ''}> Deliberações</label>
+            `;
+            document.getElementById('btn-salvar-kpis').onclick = async () => {
+  const checks = document.querySelectorAll('#kpis-opcoes input:checked');
+  kpisVisiveis = Array.from(checks).map(c => c.value);
+  const resposta = await fetchGAS('saveKPIs', { kpis: kpisVisiveis });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'KPIs atualizados', 'sucesso');
+    atualizarKPIs();
+    fecharModal('modal-kpis');
+  }
+};
+        });
+        
+        document.getElementById('btn-search').addEventListener('click', () => pesquisar(document.getElementById('global-search').value));
+        document.getElementById('global-search').addEventListener('keypress', (e) => { if (e.key === 'Enter') pesquisar(e.target.value); });
+        document.querySelectorAll('.btn-fechar-modal').forEach(btn => btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none'));
+        window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; });
+        document.getElementById('btn-logout').addEventListener('click', () => { registrarAcesso(currentUser.nome, 'Logout'); sessionStorage.clear(); location.reload(); });
+        
+        document.getElementById('btn-salvar-tarefa').addEventListener('click', salvarTarefa);
+        document.getElementById('btn-salvar-contato').addEventListener('click', async () => {
+  if (currentUser.role === 'consultor') return;
+  const contato = {
+    nome: document.getElementById('contato-nome').value,
+    instituicao: document.getElementById('contato-instituicao').value,
+    cargo: document.getElementById('contato-cargo').value,
+    telefone: document.getElementById('contato-telefone').value,
+    email: document.getElementById('contato-email').value
+  };
+
+  const resposta = await fetchGAS('saveContato', { contato: contato });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'Contato adicionado', 'sucesso');
+    fecharModal('modal-contato');
+    carregarContatos(); // recarrega a tabela
+  }
+});
+        
+        document.getElementById('btn-salvar-processo').addEventListener('click', async () => {
+  if (currentUser.role === 'consultor') return;
+  const processo = {
+    nome: document.getElementById('processo-nome').value,
+    etapa: document.getElementById('processo-etapa').value,
+    responsavel: document.getElementById('processo-responsavel').value,
+    prazo: document.getElementById('processo-prazo').value
+  };
+
+  const resposta = await fetchGAS('saveProcesso', { processo: processo });
+  if (resposta.sucesso) {
+    mostrarToast('Sucesso', 'Processo criado', 'sucesso');
+    fecharModal('modal-processo');
+    carregarProcessos(); // recarrega a lista de processos
+  }
+});
+        
+        document.getElementById('btn-salvar-acao').addEventListener('click', salvarAcao);
+        
+        document.getElementById('btn-novo-evento').addEventListener('click', () => abrirModalEvento(false, null));
+        document.getElementById('btn-salvar-evento').addEventListener('click', salvarEvento);
+        
+        document.getElementById('btn-nova-ata').addEventListener('click', () => abrirModalAta(false, null));
+        document.getElementById('btn-salvar-ata').addEventListener('click', salvarAta);
+        
+        document.getElementById('btn-novo-relatorio').addEventListener('click', () => abrirModalRelatorio(false, null));
+        document.getElementById('btn-salvar-relatorio').addEventListener('click', salvarRelatorio);
+        
+        // Event listeners para filtro de acções
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filtro = btn.dataset.filter;
+                carregarAcoes(filtro);
+            });
+        });
+        
+        // Navegação do calendário
+        document.getElementById('calendar-prev-month').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderizarCalendario();
+        });
+        document.getElementById('calendar-next-month').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderizarCalendario();
+        });
+        
+        document.getElementById('btn-exportar-pdf').addEventListener('click', () => alert('Exportação simulada'));
+        document.getElementById('btn-exportar-relatorio').addEventListener('click', () => alert('Exportação simulada'));
+        
+        document.getElementById('btn-filtrar-atas').addEventListener('click', () => {
+    const orgaoFiltro = document.getElementById('filter-orgao').value;
+    const estadoFiltro = document.getElementById('filter-estado-ata').value;
+    
+    let atasFiltradas = atas;
+    
+    // Mapeamento entre o valor do select e a natureza
+    const orgaoParaNatureza = {
+        'Reunião da Direcção': 'Reunião da Direcção',
+        'Assembleia Geral': 'Ass.Ger. Ordinária',
+        'Ass.Ger. Extraordinária': 'Ass.Ger. Extraordinária',
+	'Deliberação': 'Deliberação' 
+    };
+    
+    if (orgaoFiltro) {
+        const naturezaCorrespondente = orgaoParaNatureza[orgaoFiltro];
+        if (naturezaCorrespondente) {
+            atasFiltradas = atasFiltradas.filter(a => a.natureza === naturezaCorrespondente);
+        }
+    }
+    
+    if (estadoFiltro) {
+        // Aqui assumimos que "estado" se refere a um campo inexistente; adaptamos para usar a natureza ou outro critério.
+        // Como não há campo "estado" nas atas, vamos ignorar ou filtrar por algo relacionado (ex: se tem anexo?).
+        // Para simplificar, não faremos filtro por estado agora, mas podemos adicionar depois.
+    }
+    
+    // Renderizar a tabela com os dados filtrados
+    const tbody = document.getElementById('tabela-atas');
+    const isConsultor = currentUser.role === 'consultor';
+    tbody.innerHTML = atasFiltradas.map(a => `
+        <tr>
+            <td>${a.nr}</td>
+            <td>${a.dataReuniao}</td>
+            <td><span class="natureza-badge ${getNaturezaClass(a.natureza)}">${a.natureza}</span></td>
+            <td>${a.ordem}</td>
+            <td>${a.registro}</td>
+            <td class="action-buttons">
+                <button class="action-btn view" onclick="verAta(${a.id})"><i class="fas fa-eye"></i></button>
+                ${a.anexo ? `<button class="action-btn print" onclick="imprimirAnexoAta(${a.id})"><i class="fas fa-print"></i></button>` : ''}
+                ${!isConsultor ? `<button class="action-btn delete" onclick="excluirAta(${a.id})"><i class="fas fa-trash"></i></button>` : ''}
+            </td>
+        </tr>
+    `).join('');
+    
+    mostrarToast('Filtro aplicado', `${atasFiltradas.length} acta(s) encontrada(s)`, 'info');
+});
+        document.getElementById('btn-filtrar-tarefas').addEventListener('click', () => {
+    const prioridadeFiltro = document.getElementById('filter-tarefa-prioridade').value;
+    const statusFiltro = document.getElementById('filter-tarefa-status').value;
+    
+    let tarefasFiltradas = tarefas;
+    
+    if (prioridadeFiltro) {
+        tarefasFiltradas = tarefasFiltradas.filter(t => t.prioridade === prioridadeFiltro);
+    }
+    if (statusFiltro) {
+        tarefasFiltradas = tarefasFiltradas.filter(t => t.status === statusFiltro);
+    }
+    
+    // Renderizar a tabela com os dados filtrados
+    const tbody = document.getElementById('tabela-tarefas');
+    const isConsultor = currentUser.role === 'consultor';
+    tbody.innerHTML = tarefasFiltradas.map(t => `
+        <tr>
+            <td>${t.titulo}</td>
+            <td><span class="status ${t.prioridade === 'Alta' ? 'atrasado' : 'pendente'}">${t.prioridade}</span></td>
+            <td>${t.dataLimite || '-'}</td>
+            <td>${t.responsavel}</td>
+            <td><span class="status ${t.status === 'Concluída' ? 'concluido' : (t.status === 'Em Curso' ? 'em-andamento' : 'pendente')}">${t.status}</span></td>
+            <td class="action-buttons">
+                <button class="action-btn view" onclick="verTarefa(${t.id})"><i class="fas fa-eye"></i></button>
+                ${!isConsultor ? `
+                <button class="action-btn edit" onclick="editarTarefa(${t.id})"><i class="fas fa-edit"></i></button>
+                <button class="action-btn delete" onclick="excluirTarefa(${t.id})"><i class="fas fa-trash"></i></button>
+                ` : ''}
+            </td>
+        </tr>
+    `).join('');
+    
+    mostrarToast('Filtro aplicado', `${tarefasFiltradas.length} tarefa(s) encontrada(s)`, 'info');
+});
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('btn-login-submit').addEventListener('click', fazerLogin);
+        document.getElementById('login-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') fazerLogin(); });
+        if (verificarSessao()) { esconderModalLogin(); inicializarSistema(); } else { mostrarModalLogin(); }
+    });
+</script>
+</body>
+</html>
