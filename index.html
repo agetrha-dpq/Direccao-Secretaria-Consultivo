@@ -1657,86 +1657,59 @@
         return { success: true, valid: false }; 
     }
     async function fazerLogin() {
-  console.log('1. fazerLogin foi chamada');
   const senha = document.getElementById('login-password').value.trim();
-  console.log('2. Senha digitada:', senha ? '***' : 'vazia');
   if (!senha) {
-    console.warn('3. Senha vazia, saindo');
     mostrarErroLogin('Insira a senha');
     return;
   }
 
-const btnLogin = document.getElementById('btn-login-submit');
-		
-  // Desabilitar botão durante a validação
-  if (btnLogin) {
-    btnLogin.disabled = true;
-    btnLogin.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
-  }
-  
-  try {
-    console.log('4. Iniciando XHR');
-    const dados = {
-      action: 'login',
-      senha: senha
-    };
-    console.log('5. Dados preparados:', dados);
+  // Criar formulário oculto para enviar a senha diretamente para o GAS
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = AUTH_GAS_URL;
+  form.target = 'hidden-login-iframe';
+  form.style.display = 'none';
 
-        // ═══ USAR XMLHttpRequest COM text/plain PARA EVITAR CORS PREFLIGHT ═══
-                const url = AUTH_GAS_URL + '?action=login&senha=' + encodeURIComponent(senha);
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    console.log('6. XHR configurado (GET)');
+  form.innerHTML = `
+    <input type="hidden" name="action" value="login">
+    <input type="hidden" name="senha" value="${senha.replace(/"/g, '&quot;')}">
+  `;
 
-    const resposta = await new Promise((resolve, reject) => {
-      xhr.onload = () => {
-        console.log('7. XHR onload - status:', xhr.status);
-        console.log('8. Resposta bruta:', xhr.responseText.substring(0, 200));
-        try {
-          const parsed = JSON.parse(xhr.responseText);
-          console.log('9. JSON parseado com sucesso:', parsed);
-          resolve(parsed);
-        } catch (e) {
-          console.error('10. Erro ao parsear JSON:', e);
-          reject(new Error('Resposta inválida do servidor'));
-        }
-      };
-      xhr.onerror = () => {
-        console.error('11. XHR onerror disparado');
-        reject(new Error('Erro de conexão'));
-      };
-      xhr.send();
-      console.log('12. XHR enviado (GET)');
-    });
-	  
-    console.log('13. Resposta recebida pela Promise:', resposta);
-    if (resposta.sucesso) {
-      authToken = resposta.token;
-      currentUser = { nome: resposta.nome, role: resposta.role };
-      
-      sessionStorage.setItem('sg_authenticated', 'true');
-      sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
-      sessionStorage.setItem('sg_token', authToken);
-      
-      mostrarSucessoLogin();
-      setTimeout(() => {
-        esconderModalLogin();
-        inicializarSistema();
-      }, 1000);
-    } else {
-      mostrarErroLogin(resposta.erro || 'Senha incorreta');
-      document.getElementById('login-password').value = '';
-      document.getElementById('login-password').focus();
-    }
-  } catch (erro) {
-    console.error('Erro no login:', erro);
-    mostrarErroLogin('Erro de conexão. Verifique a rede.');
-  } finally {
-    if (btnLogin) {
-      btnLogin.disabled = false;
-      btnLogin.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Sistema';
-    }
+  // Criar iframe oculta para receber a resposta
+  let iframe = document.getElementById('hidden-login-iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'hidden-login-iframe';
+    iframe.name = 'hidden-login-iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
   }
+
+  // Evento que captura a resposta quando o iframe carregar
+  iframe.onload = function() {
+    try {
+      const resposta = JSON.parse(iframe.contentWindow.document.body.textContent);
+      if (resposta.sucesso) {
+        authToken = resposta.token;
+        currentUser = { nome: resposta.nome, role: resposta.role };
+        sessionStorage.setItem('sg_authenticated', 'true');
+        sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
+        sessionStorage.setItem('sg_token', authToken);
+        mostrarSucessoLogin();
+        setTimeout(() => {
+          esconderModalLogin();
+          inicializarSistema();
+        }, 1000);
+      } else {
+        mostrarErroLogin(resposta.erro || 'Senha incorreta');
+      }
+    } catch(e) {
+      mostrarErroLogin('Erro ao processar a resposta');
+    }
+  };
+
+  document.body.appendChild(form);
+  form.submit();
 }
     function mostrarErroLogin(msg) { document.getElementById('login-error-text').innerText = msg; document.getElementById('login-error-message').style.display = 'block'; document.getElementById('login-success-message').style.display = 'none'; }
     function mostrarSucessoLogin() { document.getElementById('login-error-message').style.display = 'none'; document.getElementById('login-success-message').style.display = 'block'; }
