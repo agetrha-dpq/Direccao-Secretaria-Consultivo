@@ -1607,7 +1607,7 @@
 
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
-    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmgf1EU9I2herHX78HDyF4qhptzBjbTOcB0wmb1DJ_adUWnPqG8sVc6iGFo9Saf218/exec';
+    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbxQSbVIjTXSa62Y9K451DI6uViLjAd-d-6de7nFNr2QsFf6MlOCEs9MpxlJj5rVYsJM/exec';
     let isAuthenticated = false;
     let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
     let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
@@ -1729,10 +1729,10 @@ async function fetchGAS(action, extraData = {}) {
   try {
     const payload = { action, token: authToken, ...extraData };
     const resposta = await fetch(AUTH_GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+  method: 'POST',
+  headers: { 'Content-Type': 'text/plain' },
+  body: JSON.stringify(payload)
+});
     const dados = await resposta.json();
     if (dados.erro) {
       console.error('Erro GAS (' + action + '):', dados.erro);
