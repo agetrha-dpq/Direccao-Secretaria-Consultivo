@@ -1657,10 +1657,11 @@
         return { success: true, valid: false }; 
     }
     async function fazerLogin() {
+  console.log('1. fazerLogin foi chamada');
   const senha = document.getElementById('login-password').value.trim();
-  const btnLogin = document.getElementById('btn-login-submit');
-  
+  console.log('2. Senha digitada:', senha ? '***' : 'vazia');
   if (!senha) {
+    console.warn('3. Senha vazia, saindo');
     mostrarErroLogin('Insira a senha');
     return;
   }
@@ -1672,28 +1673,41 @@
   }
   
   try {
+    console.log('4. Iniciando XHR');
     const dados = {
       action: 'login',
       senha: senha
     };
+    console.log('5. Dados preparados:', dados);
 
-    // ═══ USAR XMLHttpRequest COM text/plain PARA EVITAR CORS PREFLIGHT ═══
-    const xhr = new XMLHttpRequest();
+        // ═══ USAR XMLHttpRequest COM text/plain PARA EVITAR CORS PREFLIGHT ═══
+        const xhr = new XMLHttpRequest();
     xhr.open('POST', AUTH_GAS_URL, true);
     xhr.setRequestHeader('Content-Type', 'text/plain; charset=UTF-8');
+    console.log('6. XHR configurado');
 
-    const resposta = await new Promise((resolve, reject) => {
+            const resposta = await new Promise((resolve, reject) => {
       xhr.onload = () => {
+        console.log('7. XHR onload - status:', xhr.status);
+        console.log('8. Resposta bruta:', xhr.responseText.substring(0, 200));
         try {
-          resolve(JSON.parse(xhr.responseText));
+          const parsed = JSON.parse(xhr.responseText);
+          console.log('9. JSON parseado com sucesso:', parsed);
+          resolve(parsed);
         } catch (e) {
+          console.error('10. Erro ao parsear JSON:', e);
           reject(new Error('Resposta inválida do servidor'));
         }
       };
-      xhr.onerror = () => reject(new Error('Erro de conexão'));
+      xhr.onerror = () => {
+        console.error('11. XHR onerror disparado');
+        reject(new Error('Erro de conexão'));
+      };
       xhr.send(JSON.stringify(dados));
+      console.log('12. XHR enviado');
     });
-
+	  
+    console.log('13. Resposta recebida pela Promise:', resposta);
     if (resposta.sucesso) {
       authToken = resposta.token;
       currentUser = { nome: resposta.nome, role: resposta.role };
