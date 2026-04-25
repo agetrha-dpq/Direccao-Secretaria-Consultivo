@@ -1607,7 +1607,7 @@
 
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
-    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbwIRtqTnC-XAZ0jmMx3enCUmJQLG0Hwv6HG8lg9L_JObGuVUAHNA-xWhQCGyvhCz6_z/exec';
+    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbybfEkL2ftrXo03iIJG77lVCw7eWBLA6sWbOwT325GWLSTJRKlJUh899-T3Vvr2gIzE/exec';
     let isAuthenticated = false;
     let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
     let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
@@ -1683,12 +1683,12 @@ const btnLogin = document.getElementById('btn-login-submit');
     console.log('5. Dados preparados:', dados);
 
         // ═══ USAR XMLHttpRequest COM text/plain PARA EVITAR CORS PREFLIGHT ═══
-        const xhr = new XMLHttpRequest();
-    xhr.open('POST', AUTH_GAS_URL, true);
-    xhr.setRequestHeader('Content-Type', 'text/plain; charset=UTF-8');
-    console.log('6. XHR configurado');
+                const url = AUTH_GAS_URL + '?action=login&senha=' + encodeURIComponent(senha);
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    console.log('6. XHR configurado (GET)');
 
-            const resposta = await new Promise((resolve, reject) => {
+    const resposta = await new Promise((resolve, reject) => {
       xhr.onload = () => {
         console.log('7. XHR onload - status:', xhr.status);
         console.log('8. Resposta bruta:', xhr.responseText.substring(0, 200));
@@ -1705,8 +1705,8 @@ const btnLogin = document.getElementById('btn-login-submit');
         console.error('11. XHR onerror disparado');
         reject(new Error('Erro de conexão'));
       };
-      xhr.send(JSON.stringify(dados));
-      console.log('12. XHR enviado');
+      xhr.send();
+      console.log('12. XHR enviado (GET)');
     });
 	  
     console.log('13. Resposta recebida pela Promise:', resposta);
