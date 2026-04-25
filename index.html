@@ -1658,41 +1658,70 @@
     }
     async function fazerLogin() {
   const senha = document.getElementById('login-password').value.trim();
+  const btnLogin = document.getElementById('btn-login-submit');
+  
   if (!senha) {
     mostrarErroLogin('Insira a senha');
     return;
   }
-
+  
+  // Desabilitar botão durante a validação
+  if (btnLogin) {
+    btnLogin.disabled = true;
+    btnLogin.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
+  }
+  
+  resetarMensagensLogin(); // se tiver esta função; senão, ignore
+  
   try {
-    const resposta = await fetch(AUTH_GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', senha: senha })
+    const dados = {
+      action: 'login',
+      senha: senha
+    };
+
+    // ═══ USAR XMLHttpRequest COM text/plain PARA EVITAR CORS PREFLIGHT ═══
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', AUTH_GAS_URL, true);
+    xhr.setRequestHeader('Content-Type', 'text/plain; charset=UTF-8');
+
+    const resposta = await new Promise((resolve, reject) => {
+      xhr.onload = () => {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch (e) {
+          reject(new Error('Resposta inválida do servidor'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Erro de conexão'));
+      xhr.send(JSON.stringify(dados));
     });
 
-    const dados = await resposta.json();
-
-    if (dados.sucesso) {
-      // Guardar token e dados do utilizador
-      authToken = dados.token;
-      currentUser = { nome: dados.nome, role: dados.role };
-
-      // Persistir a sessão no browser (opcional, para evitar login a cada refresh)
+    if (resposta.sucesso) {
+      authToken = resposta.token;
+      currentUser = { nome: resposta.nome, role: resposta.role };
+      
       sessionStorage.setItem('sg_authenticated', 'true');
       sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
       sessionStorage.setItem('sg_token', authToken);
-
+      
       mostrarSucessoLogin();
       setTimeout(() => {
         esconderModalLogin();
         inicializarSistema();
       }, 1000);
     } else {
-      mostrarErroLogin(dados.erro || 'Senha incorreta!');
+      mostrarErroLogin(resposta.erro || 'Senha incorreta');
+      document.getElementById('login-password').value = '';
+      document.getElementById('login-password').focus();
     }
   } catch (erro) {
-    console.error('Erro ao contactar o servidor:', erro);
+    console.error('Erro no login:', erro);
     mostrarErroLogin('Erro de conexão. Verifique a rede.');
+  } finally {
+    if (btnLogin) {
+      btnLogin.disabled = false;
+      btnLogin.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Sistema';
+    }
   }
 }
     function mostrarErroLogin(msg) { document.getElementById('login-error-text').innerText = msg; document.getElementById('login-error-message').style.display = 'block'; document.getElementById('login-success-message').style.display = 'none'; }
