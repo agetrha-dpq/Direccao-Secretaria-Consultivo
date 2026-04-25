@@ -3031,10 +3031,18 @@ function fileToBase64(file) {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('btn-login-submit').addEventListener('click', fazerLogin);
-        document.getElementById('login-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') fazerLogin(); });
-        if (verificarSessao()) { esconderModalLogin(); inicializarSistema(); } else { mostrarModalLogin(); }
+    document.getElementById('btn-login-submit').addEventListener('click', (e) => {
+        e.preventDefault();
+        fazerLogin();
     });
+    document.getElementById('login-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            fazerLogin();
+        }
+    });
+    if (verificarSessao()) { esconderModalLogin(); inicializarSistema(); } else { mostrarModalLogin(); }
+});
 </script>
 </body>
 </html>
