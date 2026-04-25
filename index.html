@@ -1665,7 +1665,9 @@
     mostrarErroLogin('Insira a senha');
     return;
   }
-  
+
+const btnLogin = document.getElementById('btn-login-submit');
+		
   // Desabilitar botão durante a validação
   if (btnLogin) {
     btnLogin.disabled = true;
