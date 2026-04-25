@@ -1607,7 +1607,7 @@
 
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
-    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbxQSbVIjTXSa62Y9K451DI6uViLjAd-d-6de7nFNr2QsFf6MlOCEs9MpxlJj5rVYsJM/exec';
+    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycby5csHhN5K7KM_LxZQWoPQ8S8ITTPlVsyTuQ43Ktmt5jy_45qHrYPvi85u9RBRS2Vod/exec';
     let isAuthenticated = false;
     let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
     let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
@@ -1728,11 +1728,8 @@ function verificarSessao() {
 async function fetchGAS(action, extraData = {}) {
   try {
     const payload = { action, token: authToken, ...extraData };
-    const resposta = await fetch(AUTH_GAS_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'text/plain' },
-  body: JSON.stringify(payload)
-});
+    const queryString = new URLSearchParams(payload).toString();
+    const resposta = await fetch(`${AUTH_GAS_URL}?${queryString}`);
     const dados = await resposta.json();
     if (dados.erro) {
       console.error('Erro GAS (' + action + '):', dados.erro);
@@ -1745,7 +1742,7 @@ async function fetchGAS(action, extraData = {}) {
     return { erro: erro.message };
   }
 }
-
+	
     function aplicarPermissoes() { 
         const role = currentUser.role; 
         // Exibe todas as páginas para presidente e secretario; consultor vê tudo mas com permissões reduzidas
