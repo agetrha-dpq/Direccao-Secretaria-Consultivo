@@ -2000,8 +2000,10 @@ async function carregarReunioesCalendario() {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar tarefas</td></tr>';
     return;
   }
-  const tarefas = resposta; // a API retorna um array diretamente
-  window.tarefas = tarefas;
+  // Atualizar a variável global corretamente
+tarefas.length = 0;          // esvazia o array existente
+tarefas.push(...resposta);   // preenche com os dados do servidor
+window.tarefas = tarefas;    // mantém compatibilidade com window
 const isConsultor = currentUser.role === 'consultor';
 
   tbody.innerHTML = tarefas.map(t => `
