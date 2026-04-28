@@ -1060,7 +1060,7 @@
                 <h3 style="color: var(--primary); margin-bottom: 8px;">Secretaria-Geral</h3>
                 <p style="color: var(--gray); font-size: 14px;">AGETRHA - Gestão Administrativa</p>
             </div>
-            <form id="login-form">
+            <form id="login-form" onsubmit="return false;">
                 <div class="login-form-group">
                     <label for="login-password"><i class="fas fa-key"></i> Senha de Acesso</label>
                     <input type="password" id="login-password" class="login-form-control" placeholder="Digite a senha" autocomplete="off" required>
@@ -1657,6 +1657,7 @@
         return { success: true, valid: false }; 
     }
     async function fazerLogin() {
+		console.log('fazerLogin foi chamada');
   const senha = document.getElementById('login-password').value.trim();
   if (!senha) {
     mostrarErroLogin('Insira a senha');
@@ -2989,9 +2990,12 @@ function fileToBase64(file) {
 
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-login-submit').addEventListener('click', fazerLogin);
-        document.getElementById('login-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') fazerLogin(); });
-        if (verificarSessao()) { esconderModalLogin(); inicializarSistema(); } else { mostrarModalLogin(); }
-    });
+        document.getElementById('login-password').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        fazerLogin();
+    }
+});
 </script>
 </body>
 </html>
