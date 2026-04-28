@@ -1607,7 +1607,7 @@
 
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
-    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycby5csHhN5K7KM_LxZQWoPQ8S8ITTPlVsyTuQ43Ktmt5jy_45qHrYPvi85u9RBRS2Vod/exec';
+    const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycby2ltPn7bJdRordhgGfZ8baD_ouRsyrXcB8nmCm2qyfAYI3FYVfcFlGMCmBkhuDaVZo/exec';
     let isAuthenticated = false;
     let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
     let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
@@ -1663,53 +1663,37 @@
     return;
   }
 
-  // Criar formulário oculto para enviar a senha diretamente para o GAS
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = AUTH_GAS_URL;
-  form.target = 'hidden-login-iframe';
-  form.style.display = 'none';
+  try {
+    const resposta = await fetch(AUTH_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', senha: senha })
+    });
 
-  form.innerHTML = `
-    <input type="hidden" name="action" value="login">
-    <input type="hidden" name="senha" value="${senha.replace(/"/g, '&quot;')}">
-  `;
+    const dados = await resposta.json();
 
-  // Criar iframe oculta para receber a resposta
-  let iframe = document.getElementById('hidden-login-iframe');
-  if (!iframe) {
-    iframe = document.createElement('iframe');
-    iframe.id = 'hidden-login-iframe';
-    iframe.name = 'hidden-login-iframe';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-  }
+    if (dados.sucesso) {
+      // Guardar token e dados do utilizador
+      authToken = dados.token;
+      currentUser = { nome: dados.nome, role: dados.role };
 
-  // Evento que captura a resposta quando o iframe carregar
-  iframe.onload = function() {
-    try {
-      const resposta = JSON.parse(iframe.contentWindow.document.body.textContent);
-      if (resposta.sucesso) {
-        authToken = resposta.token;
-        currentUser = { nome: resposta.nome, role: resposta.role };
-        sessionStorage.setItem('sg_authenticated', 'true');
-        sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
-        sessionStorage.setItem('sg_token', authToken);
-        mostrarSucessoLogin();
-        setTimeout(() => {
-          esconderModalLogin();
-          inicializarSistema();
-        }, 1000);
-      } else {
-        mostrarErroLogin(resposta.erro || 'Senha incorreta');
-      }
-    } catch(e) {
-      mostrarErroLogin('Erro ao processar a resposta');
+      // Persistir a sessão no browser (opcional, para evitar login a cada refresh)
+      sessionStorage.setItem('sg_authenticated', 'true');
+      sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
+      sessionStorage.setItem('sg_token', authToken);
+
+      mostrarSucessoLogin();
+      setTimeout(() => {
+        esconderModalLogin();
+        inicializarSistema();
+      }, 1000);
+    } else {
+      mostrarErroLogin(dados.erro || 'Senha incorreta!');
     }
-  };
-
-  document.body.appendChild(form);
-  form.submit();
+  } catch (erro) {
+    console.error('Erro ao contactar o servidor:', erro);
+    mostrarErroLogin('Erro de conexão. Verifique a rede.');
+  }
 }
     function mostrarErroLogin(msg) { document.getElementById('login-error-text').innerText = msg; document.getElementById('login-error-message').style.display = 'block'; document.getElementById('login-success-message').style.display = 'none'; }
     function mostrarSucessoLogin() { document.getElementById('login-error-message').style.display = 'none'; document.getElementById('login-success-message').style.display = 'block'; }
@@ -1728,8 +1712,11 @@ function verificarSessao() {
 async function fetchGAS(action, extraData = {}) {
   try {
     const payload = { action, token: authToken, ...extraData };
-    const queryString = new URLSearchParams(payload).toString();
-    const resposta = await fetch(`${AUTH_GAS_URL}?${queryString}`);
+    const resposta = await fetch(AUTH_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     const dados = await resposta.json();
     if (dados.erro) {
       console.error('Erro GAS (' + action + '):', dados.erro);
@@ -1742,7 +1729,7 @@ async function fetchGAS(action, extraData = {}) {
     return { erro: erro.message };
   }
 }
-	
+
     function aplicarPermissoes() { 
         const role = currentUser.role; 
         // Exibe todas as páginas para presidente e secretario; consultor vê tudo mas com permissões reduzidas
@@ -3001,18 +2988,10 @@ function fileToBase64(file) {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-login-submit').addEventListener('click', (e) => {
-        e.preventDefault();
-        fazerLogin();
+        document.getElementById('btn-login-submit').addEventListener('click', fazerLogin);
+        document.getElementById('login-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') fazerLogin(); });
+        if (verificarSessao()) { esconderModalLogin(); inicializarSistema(); } else { mostrarModalLogin(); }
     });
-    document.getElementById('login-password').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            fazerLogin();
-        }
-    });
-    if (verificarSessao()) { esconderModalLogin(); inicializarSistema(); } else { mostrarModalLogin(); }
-});
 </script>
 </body>
 </html>
