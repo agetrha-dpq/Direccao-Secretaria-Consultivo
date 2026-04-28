@@ -2988,14 +2988,23 @@ function fileToBase64(file) {
 });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-login-submit').addEventListener('click', fazerLogin);
         document.getElementById('login-password').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        fazerLogin();
-    }
-});
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fazerLogin();
+            }
+        });
+
+        // Verificar se já existe sessão activa
+        if (verificarSessao()) {
+            esconderModalLogin();
+            inicializarSistema();
+        } else {
+            mostrarModalLogin();
+        }
+    });
 </script>
 </body>
 </html>
