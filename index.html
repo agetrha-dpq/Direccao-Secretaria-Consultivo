@@ -1657,7 +1657,7 @@
         return { success: true, valid: false }; 
     }
     async function fazerLogin() {
-		console.log('fazerLogin foi chamada');
+  console.log('fazerLogin foi chamada');
   const senha = document.getElementById('login-password').value.trim();
   if (!senha) {
     mostrarErroLogin('Insira a senha');
@@ -1665,24 +1665,23 @@
   }
 
   try {
+    const formData = new FormData();
+    formData.append('action', 'login');
+    formData.append('senha', senha);
+
     const resposta = await fetch(AUTH_GAS_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', senha: senha })
+      body: formData   // sem headers personalizados → evita preflight
     });
 
     const dados = await resposta.json();
 
     if (dados.sucesso) {
-      // Guardar token e dados do utilizador
       authToken = dados.token;
       currentUser = { nome: dados.nome, role: dados.role };
-
-      // Persistir a sessão no browser (opcional, para evitar login a cada refresh)
       sessionStorage.setItem('sg_authenticated', 'true');
       sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
       sessionStorage.setItem('sg_token', authToken);
-
       mostrarSucessoLogin();
       setTimeout(() => {
         esconderModalLogin();
