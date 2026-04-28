@@ -2771,6 +2771,7 @@ function fileToBase64(file) {
     }
 
     // Inicialização principal
+        // ===== INICIALIZAÇÃO PRINCIPAL (SUBSTITUIR TUDO DAQUI ATÉ AO FIM) =====
     function inicializarSistema() {
         aplicarPermissoes();
         inicializarNotificacoes();
@@ -2783,12 +2784,11 @@ function fileToBase64(file) {
         carregarAtas();
         carregarRelatoriosPlanos();
         carregarAcessos();
-	carregarKPIs();
+        carregarKPIs();
         atualizarKPIs();
         atualizarCardsResumo();
-	carregarReunioesCalendario();
-	
-        
+        carregarReunioesCalendario();
+
         if (document.getElementById('agenda-content').style.display !== 'none') {
             renderizarCalendario();
         }
@@ -2796,7 +2796,9 @@ function fileToBase64(file) {
             inicializarGraficosResumo();
         }
 
-        document.querySelectorAll('.sidebar-menu a').forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); alternarPagina(item.dataset.page); }); });
+        document.querySelectorAll('.sidebar-menu a').forEach(item => {
+            item.addEventListener('click', (e) => { e.preventDefault(); alternarPagina(item.dataset.page); });
+        });
 
         document.getElementById('btn-nova-tarefa-avancada').addEventListener('click', () => {
             if (currentUser.role === 'consultor') return;
@@ -2806,10 +2808,15 @@ function fileToBase64(file) {
             document.getElementById('tarefa-responsavel').value = 'Secretaria';
             document.getElementById('modal-tarefa-avancada').style.display = 'flex';
         });
-        
-        document.getElementById('btn-novo-contato').addEventListener('click', () => { if (currentUser.role !== 'consultor') document.getElementById('modal-contato').style.display = 'flex'; });
-        document.getElementById('btn-novo-processo').addEventListener('click', () => { if (currentUser.role !== 'consultor') document.getElementById('modal-processo').style.display = 'flex'; });
+
+        document.getElementById('btn-novo-contato').addEventListener('click', () => {
+            if (currentUser.role !== 'consultor') document.getElementById('modal-contato').style.display = 'flex';
+        });
+        document.getElementById('btn-novo-processo').addEventListener('click', () => {
+            if (currentUser.role !== 'consultor') document.getElementById('modal-processo').style.display = 'flex';
+        });
         document.getElementById('btn-novo-prazo').addEventListener('click', () => abrirModalAcao(false, null));
+
         document.getElementById('btn-personalizar-kpis').addEventListener('click', () => {
             document.getElementById('modal-kpis').style.display = 'flex';
             document.getElementById('kpis-opcoes').innerHTML = `
@@ -2819,79 +2826,72 @@ function fileToBase64(file) {
                 <label><input type="checkbox" value="deliberacoes" ${kpisVisiveis.includes('deliberacoes') ? 'checked' : ''}> Deliberações</label>
             `;
             document.getElementById('btn-salvar-kpis').onclick = async () => {
-  const checks = document.querySelectorAll('#kpis-opcoes input:checked');
-  kpisVisiveis = Array.from(checks).map(c => c.value);
-  const resposta = await fetchGAS('saveKPIs', { kpis: kpisVisiveis });
-  if (resposta.sucesso) {
-    mostrarToast('Sucesso', 'KPIs atualizados', 'sucesso');
-    atualizarKPIs();
-    fecharModal('modal-kpis');
-  }
-};
+                const checks = document.querySelectorAll('#kpis-opcoes input:checked');
+                kpisVisiveis = Array.from(checks).map(c => c.value);
+                const resposta = await fetchGAS('saveKPIs', { kpis: kpisVisiveis });
+                if (resposta.sucesso) {
+                    mostrarToast('Sucesso', 'KPIs atualizados', 'sucesso');
+                    atualizarKPIs();
+                    fecharModal('modal-kpis');
+                }
+            };
         });
-        
+
         document.getElementById('btn-search').addEventListener('click', () => pesquisar(document.getElementById('global-search').value));
         document.getElementById('global-search').addEventListener('keypress', (e) => { if (e.key === 'Enter') pesquisar(e.target.value); });
         document.querySelectorAll('.btn-fechar-modal').forEach(btn => btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none'));
         window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; });
         document.getElementById('btn-logout').addEventListener('click', () => { registrarAcesso(currentUser.nome, 'Logout'); sessionStorage.clear(); location.reload(); });
-        
+
         document.getElementById('btn-salvar-tarefa').addEventListener('click', salvarTarefa);
         document.getElementById('btn-salvar-contato').addEventListener('click', async () => {
-  if (currentUser.role === 'consultor') return;
-  const contato = {
-    nome: document.getElementById('contato-nome').value,
-    instituicao: document.getElementById('contato-instituicao').value,
-    cargo: document.getElementById('contato-cargo').value,
-    telefone: document.getElementById('contato-telefone').value,
-    email: document.getElementById('contato-email').value
-  };
+            if (currentUser.role === 'consultor') return;
+            const contato = {
+                nome: document.getElementById('contato-nome').value,
+                instituicao: document.getElementById('contato-instituicao').value,
+                cargo: document.getElementById('contato-cargo').value,
+                telefone: document.getElementById('contato-telefone').value,
+                email: document.getElementById('contato-email').value
+            };
+            const resposta = await fetchGAS('saveContato', { contato: contato });
+            if (resposta.sucesso) {
+                mostrarToast('Sucesso', 'Contato adicionado', 'sucesso');
+                fecharModal('modal-contato');
+                carregarContatos();
+            }
+        });
 
-  const resposta = await fetchGAS('saveContato', { contato: contato });
-  if (resposta.sucesso) {
-    mostrarToast('Sucesso', 'Contato adicionado', 'sucesso');
-    fecharModal('modal-contato');
-    carregarContatos(); // recarrega a tabela
-  }
-});
-        
         document.getElementById('btn-salvar-processo').addEventListener('click', async () => {
-  if (currentUser.role === 'consultor') return;
-  const processo = {
-    nome: document.getElementById('processo-nome').value,
-    etapa: document.getElementById('processo-etapa').value,
-    responsavel: document.getElementById('processo-responsavel').value,
-    prazo: document.getElementById('processo-prazo').value
-  };
+            if (currentUser.role === 'consultor') return;
+            const processo = {
+                nome: document.getElementById('processo-nome').value,
+                etapa: document.getElementById('processo-etapa').value,
+                responsavel: document.getElementById('processo-responsavel').value,
+                prazo: document.getElementById('processo-prazo').value
+            };
+            const resposta = await fetchGAS('saveProcesso', { processo: processo });
+            if (resposta.sucesso) {
+                mostrarToast('Sucesso', 'Processo criado', 'sucesso');
+                fecharModal('modal-processo');
+                carregarProcessos();
+            }
+        });
 
-  const resposta = await fetchGAS('saveProcesso', { processo: processo });
-  if (resposta.sucesso) {
-    mostrarToast('Sucesso', 'Processo criado', 'sucesso');
-    fecharModal('modal-processo');
-    carregarProcessos(); // recarrega a lista de processos
-  }
-});
-        
         document.getElementById('btn-salvar-acao').addEventListener('click', salvarAcao);
-        
         document.getElementById('btn-novo-evento').addEventListener('click', () => abrirModalEvento(false, null));
         document.getElementById('btn-salvar-evento').addEventListener('click', salvarEvento);
-        
         document.getElementById('btn-nova-ata').addEventListener('click', () => abrirModalAta(false, null));
         document.getElementById('btn-salvar-ata').addEventListener('click', salvarAta);
-        
         document.getElementById('btn-novo-relatorio').addEventListener('click', () => abrirModalRelatorio(false, null));
         document.getElementById('btn-salvar-relatorio').addEventListener('click', salvarRelatorio);
-        
-        // Event listeners para filtro de acções
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const filtro = btn.dataset.filter;
                 carregarAcoes(filtro);
             });
         });
-        
-        // Navegação do calendário
+
         document.getElementById('calendar-prev-month').addEventListener('click', () => {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
             renderizarCalendario();
@@ -2900,95 +2900,77 @@ function fileToBase64(file) {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
             renderizarCalendario();
         });
-        
+
         document.getElementById('btn-exportar-pdf').addEventListener('click', () => alert('Exportação simulada'));
         document.getElementById('btn-exportar-relatorio').addEventListener('click', () => alert('Exportação simulada'));
-        
+
         document.getElementById('btn-filtrar-atas').addEventListener('click', () => {
-    const orgaoFiltro = document.getElementById('filter-orgao').value;
-    const estadoFiltro = document.getElementById('filter-estado-ata').value;
-    
-    let atasFiltradas = atas;
-    
-    // Mapeamento entre o valor do select e a natureza
-    const orgaoParaNatureza = {
-        'Reunião da Direcção': 'Reunião da Direcção',
-        'Assembleia Geral': 'Ass.Ger. Ordinária',
-        'Ass.Ger. Extraordinária': 'Ass.Ger. Extraordinária',
-	'Deliberação': 'Deliberação' 
-    };
-    
-    if (orgaoFiltro) {
-        const naturezaCorrespondente = orgaoParaNatureza[orgaoFiltro];
-        if (naturezaCorrespondente) {
-            atasFiltradas = atasFiltradas.filter(a => a.natureza === naturezaCorrespondente);
-        }
-    }
-    
-    if (estadoFiltro) {
-        // Aqui assumimos que "estado" se refere a um campo inexistente; adaptamos para usar a natureza ou outro critério.
-        // Como não há campo "estado" nas atas, vamos ignorar ou filtrar por algo relacionado (ex: se tem anexo?).
-        // Para simplificar, não faremos filtro por estado agora, mas podemos adicionar depois.
-    }
-    
-    // Renderizar a tabela com os dados filtrados
-    const tbody = document.getElementById('tabela-atas');
-    const isConsultor = currentUser.role === 'consultor';
-    tbody.innerHTML = atasFiltradas.map(a => `
-        <tr>
-            <td>${a.nr}</td>
-            <td>${a.dataReuniao}</td>
-            <td><span class="natureza-badge ${getNaturezaClass(a.natureza)}">${a.natureza}</span></td>
-            <td>${a.ordem}</td>
-            <td>${a.registro}</td>
-            <td class="action-buttons">
-                <button class="action-btn view" onclick="verAta(${a.id})"><i class="fas fa-eye"></i></button>
-                ${a.anexo ? `<button class="action-btn print" onclick="imprimirAnexoAta(${a.id})"><i class="fas fa-print"></i></button>` : ''}
-                ${!isConsultor ? `<button class="action-btn delete" onclick="excluirAta(${a.id})"><i class="fas fa-trash"></i></button>` : ''}
-            </td>
-        </tr>
-    `).join('');
-    
-    mostrarToast('Filtro aplicado', `${atasFiltradas.length} acta(s) encontrada(s)`, 'info');
-});
+            const orgaoFiltro = document.getElementById('filter-orgao').value;
+            let atasFiltradas = atas;
+            const orgaoParaNatureza = {
+                'Reunião da Direcção': 'Reunião da Direcção',
+                'Assembleia Geral': 'Ass.Ger. Ordinária',
+                'Ass.Ger. Extraordinária': 'Ass.Ger. Extraordinária',
+                'Deliberação': 'Deliberação'
+            };
+            if (orgaoFiltro) {
+                const naturezaCorrespondente = orgaoParaNatureza[orgaoFiltro];
+                if (naturezaCorrespondente) {
+                    atasFiltradas = atasFiltradas.filter(a => a.natureza === naturezaCorrespondente);
+                }
+            }
+            const tbody = document.getElementById('tabela-atas');
+            const isConsultor = currentUser.role === 'consultor';
+            tbody.innerHTML = atasFiltradas.map(a => `
+                <tr>
+                    <td>${a.nr}</td>
+                    <td>${a.dataReuniao}</td>
+                    <td><span class="natureza-badge ${getNaturezaClass(a.natureza)}">${a.natureza}</span></td>
+                    <td>${a.ordem}</td>
+                    <td>${a.registro}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn view" onclick="verAta(${a.id})"><i class="fas fa-eye"></i></button>
+                        ${a.anexo ? `<button class="action-btn print" onclick="imprimirAnexoAta(${a.id})"><i class="fas fa-print"></i></button>` : ''}
+                        ${!isConsultor ? `<button class="action-btn delete" onclick="excluirAta(${a.id})"><i class="fas fa-trash"></i></button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+            mostrarToast('Filtro aplicado', `${atasFiltradas.length} acta(s) encontrada(s)`, 'info');
+        });
+
         document.getElementById('btn-filtrar-tarefas').addEventListener('click', () => {
-    const prioridadeFiltro = document.getElementById('filter-tarefa-prioridade').value;
-    const statusFiltro = document.getElementById('filter-tarefa-status').value;
-    
-    let tarefasFiltradas = tarefas;
-    
-    if (prioridadeFiltro) {
-        tarefasFiltradas = tarefasFiltradas.filter(t => t.prioridade === prioridadeFiltro);
-    }
-    if (statusFiltro) {
-        tarefasFiltradas = tarefasFiltradas.filter(t => t.status === statusFiltro);
-    }
-    
-    // Renderizar a tabela com os dados filtrados
-    const tbody = document.getElementById('tabela-tarefas');
-    const isConsultor = currentUser.role === 'consultor';
-    tbody.innerHTML = tarefasFiltradas.map(t => `
-        <tr>
-            <td>${t.titulo}</td>
-            <td><span class="status ${t.prioridade === 'Alta' ? 'atrasado' : 'pendente'}">${t.prioridade}</span></td>
-            <td>${t.dataLimite || '-'}</td>
-            <td>${t.responsavel}</td>
-            <td><span class="status ${t.status === 'Concluída' ? 'concluido' : (t.status === 'Em Curso' ? 'em-andamento' : 'pendente')}">${t.status}</span></td>
-            <td class="action-buttons">
-                <button class="action-btn view" onclick="verTarefa(${t.id})"><i class="fas fa-eye"></i></button>
-                ${!isConsultor ? `
-                <button class="action-btn edit" onclick="editarTarefa(${t.id})"><i class="fas fa-edit"></i></button>
-                <button class="action-btn delete" onclick="excluirTarefa(${t.id})"><i class="fas fa-trash"></i></button>
-                ` : ''}
-            </td>
-        </tr>
-    `).join('');
-    
-    mostrarToast('Filtro aplicado', `${tarefasFiltradas.length} tarefa(s) encontrada(s)`, 'info');
-});
+            const prioridadeFiltro = document.getElementById('filter-tarefa-prioridade').value;
+            const statusFiltro = document.getElementById('filter-tarefa-status').value;
+            let tarefasFiltradas = tarefas;
+            if (prioridadeFiltro) {
+                tarefasFiltradas = tarefasFiltradas.filter(t => t.prioridade === prioridadeFiltro);
+            }
+            if (statusFiltro) {
+                tarefasFiltradas = tarefasFiltradas.filter(t => t.status === statusFiltro);
+            }
+            const tbody = document.getElementById('tabela-tarefas');
+            const isConsultor = currentUser.role === 'consultor';
+            tbody.innerHTML = tarefasFiltradas.map(t => `
+                <tr>
+                    <td>${t.titulo}</td>
+                    <td><span class="status ${t.prioridade === 'Alta' ? 'atrasado' : 'pendente'}">${t.prioridade}</span></td>
+                    <td>${t.dataLimite || '-'}</td>
+                    <td>${t.responsavel}</td>
+                    <td><span class="status ${t.status === 'Concluída' ? 'concluido' : (t.status === 'Em Curso' ? 'em-andamento' : 'pendente')}">${t.status}</span></td>
+                    <td class="action-buttons">
+                        <button class="action-btn view" onclick="verTarefa(${t.id})"><i class="fas fa-eye"></i></button>
+                        ${!isConsultor ? `
+                        <button class="action-btn edit" onclick="editarTarefa(${t.id})"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete" onclick="excluirTarefa(${t.id})"><i class="fas fa-trash"></i></button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+            mostrarToast('Filtro aplicado', `${tarefasFiltradas.length} tarefa(s) encontrada(s)`, 'info');
+        });
     }
 
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-login-submit').addEventListener('click', fazerLogin);
         document.getElementById('login-password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -2997,7 +2979,6 @@ function fileToBase64(file) {
             }
         });
 
-        // Verificar se já existe sessão activa
         if (verificarSessao()) {
             esconderModalLogin();
             inicializarSistema();
