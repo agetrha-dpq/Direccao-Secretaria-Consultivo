@@ -1711,12 +1711,18 @@ function verificarSessao() {
 
 async function fetchGAS(action, extraData = {}) {
   try {
+    // Monta o payload completo (com token e extraData)
     const payload = { action, token: authToken, ...extraData };
+    
+    // Envia como FormData (evita preflight CORS)
+    const formData = new FormData();
+    formData.append('json', JSON.stringify(payload));  // único parâmetro com JSON
+
     const resposta = await fetch(AUTH_GAS_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: formData   // sem 'Content-Type' manual → sem preflight
     });
+
     const dados = await resposta.json();
     if (dados.erro) {
       console.error('Erro GAS (' + action + '):', dados.erro);
@@ -1729,7 +1735,6 @@ async function fetchGAS(action, extraData = {}) {
     return { erro: erro.message };
   }
 }
-
     function aplicarPermissoes() { 
         const role = currentUser.role; 
         // Exibe todas as páginas para presidente e secretario; consultor vê tudo mas com permissões reduzidas
