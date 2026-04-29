@@ -2118,8 +2118,9 @@ const isConsultor = currentUser.role === 'consultor';
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar atas</td></tr>';
     return;
   }
-  const atas = resposta;         // a API retorna o array de atas
-  window.atas = atas;            // guarda na variável global (já declarada no topo)
+    atas.length = 0;               // esvazia o array global existente
+  atas.push(...resposta);        // preenche com os dados do servidor
+  window.atas = atas;            // mantém compatibilidade)
 
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = atas.map(a => `
