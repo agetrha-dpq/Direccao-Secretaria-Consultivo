@@ -2497,9 +2497,10 @@ function fileToBase64(file) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Erro ao carregar eventos</td></tr>';
     return;
   }
-  const eventos = resposta;        // a API retorna o array de eventos
-  window.eventos = eventos;        // guarda na variável global
-
+    eventos.length = 0;              // esvazia o array global existente
+  eventos.push(...resposta);       // preenche com os dados do servidor
+  window.eventos = eventos;        // mantém compatibilidade
+		
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = eventos.map(e => `
     <tr>
