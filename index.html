@@ -2227,24 +2227,43 @@ function fileToBase64(file) {
 }
 
     function verAta(id) {
-        const ata = atas.find(a => a.id === id);
-        if (!ata) return;
-        let info = `Acta ${ata.nr}\nData: ${ata.dataReuniao}\nParticipantes: ${ata.participantes}\nOrdem: ${ata.ordem}\nNatureza: ${ata.natureza}`;
-        if (ata.anexo) info += `\nAnexo: ${ata.anexo.nome}`;
-        alert(info);
-    }
+    const ata = atas.find(a => a.id == id);
+    if (!ata) return;
+
+    const conteudo = document.getElementById('detalhes-tarefa-conteudo'); // reutiliza o mesmo container de detalhes
+    conteudo.innerHTML = `
+        <div style="display:grid; gap:15px;">
+            <div><strong>Nr Acta:</strong> ${ata.nr}</div>
+            <div><strong>Data Reunião:</strong> ${ata.dataReuniao}</div>
+            <div><strong>Participantes:</strong> ${ata.participantes}</div>
+            <div><strong>Ordem de Trabalho:</strong> ${ata.ordem}</div>
+            <div><strong>Natureza:</strong> ${ata.natureza}</div>
+            <div><strong>Redigida por:</strong> ${ata.redigida || 'N/A'}</div>
+            <div><strong>Registro:</strong> ${ata.registro || 'N/A'}</div>
+            <div><strong>Descrição:</strong> ${ata.descricao || 'Sem descrição'}</div>
+        </div>
+    `;
+
+    // Configurar o botão "Editar" para abrir a edição da ata
+    document.getElementById('btn-editar-detalhes-tarefa').style.display = currentUser.role === 'consultor' ? 'none' : 'inline-flex';
+    document.getElementById('btn-editar-detalhes-tarefa').onclick = () => {
+        fecharModal('modal-detalhes-tarefa');
+        abrirModalAta(true, ata);
+    };
+
+    document.getElementById('modal-detalhes-tarefa').style.display = 'flex';
+}
 
     function imprimirAnexoAta(id) {
-        const ata = atas.find(a => a.id === id);
-        if (!ata || !ata.anexo) {
-            alert('Nenhum anexo disponível para impressão.');
-            return;
-        }
-        // Abrir PDF em nova janela para impressão
-        const win = window.open('', '_blank');
-        win.document.write(`<iframe src="${ata.anexo.dados}" width="100%" height="100%" style="border:none;"></iframe>`);
-        win.document.title = ata.anexo.nome;
+    const ata = atas.find(a => a.id == id);
+    if (!ata || !ata.anexo) {
+        alert('Nenhum anexo disponível para impressão.');
+        return;
     }
+    // Abre diretamente o ficheiro no Google Drive usando o ID
+    const url = `https://drive.google.com/file/d/${ata.anexo.id}/view`;
+    window.open(url, '_blank');
+}
 
     async function excluirAta(id) {
   if (currentUser.role === 'consultor') return;
