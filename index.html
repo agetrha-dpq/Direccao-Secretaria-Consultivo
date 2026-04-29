@@ -2628,9 +2628,9 @@ function fileToBase64(file) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar relatórios</td></tr>';
     return;
   }
-  const relatoriosPlanos = resposta;          // array retornado pela API
-  window.relatoriosPlanos = relatoriosPlanos;  // atualiza a variável global
-
+    relatoriosPlanos.length = 0;
+  relatoriosPlanos.push(...resposta);
+  window.relatoriosPlanos = relatoriosPlanos;
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = relatoriosPlanos.map(r => `
     <tr>
@@ -2724,18 +2724,36 @@ function fileToBase64(file) {
 }
 
     function verRelatorio(id) {
-        const rel = relatoriosPlanos.find(r => r.id === id);
-        if (!rel) return;
-        alert(`Nr: ${rel.nr}\nTítulo: ${rel.titulo}\nData Registro: ${rel.dataRegistro}\nAutor: ${rel.autor}\nTipo: ${rel.tipo}\nPeríodo: ${rel.periodo}\nEstado: ${rel.estado}\nDescrição: ${rel.descricao}`);
-    }
+    const rel = relatoriosPlanos.find(r => r.id == id);
+    if (!rel) return;
+
+    const conteudo = document.getElementById('detalhes-tarefa-conteudo');
+    conteudo.innerHTML = `
+        <div style="display:grid; gap:15px;">
+            <div><strong>Nr:</strong> ${rel.nr}</div>
+            <div><strong>Título:</strong> ${rel.titulo}</div>
+            <div><strong>Tipo:</strong> ${rel.tipo}</div>
+            <div><strong>Período:</strong> ${rel.periodo}</div>
+            <div><strong>Estado:</strong> ${rel.estado}</div>
+            <div><strong>Autor:</strong> ${rel.autor || 'N/A'}</div>
+            <div><strong>Data de Registo:</strong> ${rel.dataRegistro || 'N/A'}</div>
+            <div><strong>Descrição:</strong> ${rel.descricao || 'Sem descrição'}</div>
+        </div>
+    `;
+
+    document.getElementById('btn-editar-detalhes-tarefa').style.display = 'none'; // Não há edição inline para relatórios
+    document.getElementById('modal-detalhes-tarefa').style.display = 'flex';
+}
 
     function imprimirAnexoRelatorio(id) {
-        const rel = relatoriosPlanos.find(r => r.id === id);
-        if (!rel || !rel.anexo) { alert('Sem anexo'); return; }
-        const win = window.open('', '_blank');
-        win.document.write(`<iframe src="${rel.anexo.dados}" width="100%" height="100%"></iframe>`);
+    const rel = relatoriosPlanos.find(r => r.id == id);
+    if (!rel || !rel.anexo) {
+        alert('Sem anexo');
+        return;
     }
-
+    const url = `https://drive.google.com/file/d/${rel.anexo.id}/view`;
+    window.open(url, '_blank');
+}
     async function excluirRelatorio(id) {
   if (currentUser.role === 'consultor') return;
   if (!confirm('Excluir este relatório/plano?')) return;
