@@ -2523,10 +2523,31 @@ function fileToBase64(file) {
 }
 
     function verEvento(id) {
-        const evento = eventos.find(e => e.id == id);
-        if (!evento) return;
-        alert(`Nome: ${evento.nome}\nTipo: ${evento.tipo}\nData Realização: ${evento.dataRealizacao}\nDescrição: ${evento.descricao}\nConvidados: ${evento.convidados}`);
-    }
+    const evento = eventos.find(e => e.id == id);
+    if (!evento) return;
+
+    const conteudo = document.getElementById('detalhes-tarefa-conteudo');
+    conteudo.innerHTML = `
+        <div style="display:grid; gap:15px;">
+            <div><strong>Nome:</strong> ${evento.nome}</div>
+            <div><strong>Tipo:</strong> ${evento.tipo || 'N/A'}</div>
+            <div><strong>Data de Registo:</strong> ${evento.dataRegistro || 'N/A'}</div>
+            <div><strong>Data de Realização:</strong> ${evento.dataRealizacao || 'N/A'}</div>
+            <div><strong>Data Fim:</strong> ${evento.dataFinda || 'N/A'}</div>
+            <div><strong>Descrição:</strong> ${evento.descricao || 'Sem descrição'}</div>
+            <div><strong>Convidados:</strong> ${evento.convidados || 'N/A'}</div>
+        </div>
+    `;
+
+    // Configurar botão "Editar" para abrir o formulário de edição do evento
+    document.getElementById('btn-editar-detalhes-tarefa').style.display = currentUser.role === 'consultor' ? 'none' : 'inline-flex';
+    document.getElementById('btn-editar-detalhes-tarefa').onclick = () => {
+        fecharModal('modal-detalhes-tarefa');
+        abrirModalEvento(true, evento);
+    };
+
+    document.getElementById('modal-detalhes-tarefa').style.display = 'flex';
+}
 
     function editarEvento(id) {
         if (currentUser.role === 'consultor') return;
