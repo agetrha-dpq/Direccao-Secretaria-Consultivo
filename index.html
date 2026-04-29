@@ -1972,10 +1972,11 @@ async function carregarKPIs() {
 
 
 async function carregarReunioesCalendario() {
-  const resposta = await fetchGAS('getCalendario');
+    const resposta = await fetchGAS('getCalendario');
   if (!resposta.erro) {
-    reunioesCalendario = resposta;
-    renderizarCalendario(); // redesena o calendário com os novos dados
+    reunioesCalendario.length = 0;        // esvazia o array existente
+    reunioesCalendario.push(...resposta); // preenche com os dados do servidor
+    renderizarCalendario();
   }
 }
 
