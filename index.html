@@ -2386,8 +2386,9 @@ function fileToBase64(file) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar ações</td></tr>';
     return;
   }
-  const acoes = resposta;
-  window.acoes = acoes; // guarda na variável global
+    acoes.length = 0;
+  acoes.push(...resposta);
+  window.acoes = acoes;
 
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = acoes.map(a => `
@@ -2415,21 +2416,28 @@ function fileToBase64(file) {
 }
 
     function verAcao(id) {
-        const acao = acoes.find(a => a.id === id);
-        if (!acao) return;
-        
-        const conteudo = document.getElementById('detalhes-acao-conteudo');
-        conteudo.innerHTML = `
-            <div style="display:grid; gap:15px;">
-                <div><strong>Descrição:</strong> ${acao.descricao}</div>
-                <div><strong>Data:</strong> ${acao.data}</div>
-                <div><strong>Recorrência:</strong> ${acao.recorrencia}</div>
-                <div><strong>Responsável:</strong> ${acao.responsavel}</div>
-                <div><strong>Status:</strong> ${acao.status}</div>
-            </div>
-        `;
-        document.getElementById('modal-detalhes-acao').style.display = 'flex';
-    }
+    const acao = acoes.find(a => a.id == id);
+    if (!acao) return;
+
+    const conteudo = document.getElementById('detalhes-tarefa-conteudo');
+    conteudo.innerHTML = `
+        <div style="display:grid; gap:15px;">
+            <div><strong>Descrição:</strong> ${acao.descricao}</div>
+            <div><strong>Data:</strong> ${acao.data || 'N/A'}</div>
+            <div><strong>Recorrência:</strong> ${acao.recorrencia || 'N/A'}</div>
+            <div><strong>Responsável:</strong> ${acao.responsavel || 'N/A'}</div>
+            <div><strong>Status:</strong> ${acao.status}</div>
+        </div>
+    `;
+
+    document.getElementById('btn-editar-detalhes-tarefa').style.display = currentUser.role === 'consultor' ? 'none' : 'inline-flex';
+    document.getElementById('btn-editar-detalhes-tarefa').onclick = () => {
+        fecharModal('modal-detalhes-tarefa');
+        abrirModalAcao(true, acao);
+    };
+
+    document.getElementById('modal-detalhes-tarefa').style.display = 'flex';
+}
 
     function abrirModalAcao(editMode = false, acao = null) {
         if (currentUser.role === 'consultor') return;
