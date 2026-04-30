@@ -2645,7 +2645,7 @@ function fileToBase64(file) {
       <td>${r.nr}</td>
       <td>${r.titulo}</td>
       <td>${r.tipo}</td>
-      <td>${r.periodo}</td>
+      <td>${formatarData(r.periodo) || r.periodo}</td>
       <td><span class="status ${r.estado === 'Concluído' ? 'concluido' : 'em-curso'}">${r.estado}</span></td>
       <td class="action-buttons">
         <button class="action-btn view" onclick="verRelatorio(${r.id})"><i class="fas fa-eye"></i></button>
@@ -2741,7 +2741,7 @@ function fileToBase64(file) {
             <div><strong>Nr:</strong> ${rel.nr}</div>
             <div><strong>Título:</strong> ${rel.titulo}</div>
             <div><strong>Tipo:</strong> ${rel.tipo}</div>
-            <div><strong>Período:</strong> ${rel.periodo}</div>
+            <div><strong>Período:</strong> ${formatarData(rel.periodo) || rel.periodo}</div>
             <div><strong>Estado:</strong> ${rel.estado}</div>
             <div><strong>Autor:</strong> ${rel.autor || 'N/A'}</div>
             <div><strong>Data de Registo:</strong> ${formatarData(rel.dataRegistro) || 'N/A'}</div>
