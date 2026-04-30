@@ -2349,7 +2349,7 @@ function fileToBase64(file) {
         div.appendChild(dayNumber);
         
         // Verificar reuniões agendadas para este dia
-        const dataStr = date.toISOString().split('T')[0];
+        const dataStr = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
         const reunioesDoDia = reunioesCalendario.filter(r => {
     const dataRegisto = r.data ? r.data.substring(0, 10) : '';
     return dataRegisto === dataStr;
@@ -2375,7 +2375,7 @@ function fileToBase64(file) {
   const titulo = prompt('Título da reunião:');
   if (!titulo) return;
 
-  const dataStr = date.toISOString().split('T')[0];
+  const dataStr = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
   const resposta = await fetchGAS('saveReuniao', {
     reuniao: { data: dataStr, titulo: titulo }
   });
