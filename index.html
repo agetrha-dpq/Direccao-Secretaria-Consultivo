@@ -1981,15 +1981,19 @@ async function carregarKPIs() {
 async function carregarReunioesCalendario() {
   const resposta = await fetchGAS('getCalendario');
   if (!resposta.erro) {
-    // Normaliza as datas ISO para YYYY-MM-DD
-    const reunioesFormatadas = resposta.map(r => ({
-      ...r,
-      data: r.data ? r.data.substring(0, 10) : ''
-    }));
+    const reunioesFormatadas = resposta.map(r => {
+      // Se a data vier em formato ISO (com T e Z), converte para data local
+      const dataObj = new Date(r.data);
+      const dataLocal = dataObj.getFullYear() + '-' + 
+                        String(dataObj.getMonth()+1).padStart(2,'0') + '-' + 
+                        String(dataObj.getDate()).padStart(2,'0');
+      return { ...r, data: dataLocal };
+    });
     reunioesCalendario.length = 0;
     reunioesCalendario.push(...reunioesFormatadas);
     renderizarCalendario();
   }
+}
 }    // Navegação
     function alternarPagina(pagina) {
         const secoes = ['visao-geral-content','tarefas-content','atas-content','agenda-content','apoio-direcao-content','relatorios-content','comunicacao-content','contatos-content','seguranca-content'];
