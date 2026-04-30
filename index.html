@@ -2431,7 +2431,7 @@ function fileToBase64(file) {
     conteudo.innerHTML = `
         <div style="display:grid; gap:15px;">
             <div><strong>Descrição:</strong> ${acao.descricao}</div>
-            <div><strong>Data:</strong> ${acao.data || 'N/A'}</div>
+            <div><strong>Data:</strong> ${formatarData(acao.data) || 'N/A'}</div>
             <div><strong>Recorrência:</strong> ${acao.recorrencia || 'N/A'}</div>
             <div><strong>Responsável:</strong> ${acao.responsavel || 'N/A'}</div>
             <div><strong>Status:</strong> ${acao.status}</div>
@@ -2523,8 +2523,8 @@ function fileToBase64(file) {
       <td>${e.nome}</td>
       <td>${e.tipo || '-'}</td>
       <td>${formatarData(e.dataRegistro) || '-'}</td>
-      <td>${e.dataRealizacao || '-'}</td>
-      <td>${e.dataFinda || '-'}</td>
+      <td>${formatarData(e.dataRealizacao) || '-'}</td>
+<td>${formatarData(e.dataFinda) || '-'}</td>
       <td>${e.descricao ? e.descricao.substring(0, 40) : '-'}</td>
       <td>${e.convidados || '-'}</td>
       <td class="action-buttons">
@@ -2548,8 +2548,8 @@ function fileToBase64(file) {
             <div><strong>Nome:</strong> ${evento.nome}</div>
             <div><strong>Tipo:</strong> ${evento.tipo || 'N/A'}</div>
             <div><strong>Data de Registo:</strong> ${formatarData(evento.dataRegistro) || 'N/A'}</div>
-            <div><strong>Data de Realização:</strong> ${evento.dataRealizacao || 'N/A'}</div>
-            <div><strong>Data Fim:</strong> ${evento.dataFinda || 'N/A'}</div>
+            <div><strong>Data de Realização:</strong> ${formatarData(evento.dataRealizacao) || 'N/A'}</div>
+<div><strong>Data Fim:</strong> ${formatarData(evento.dataFinda) || 'N/A'}</div>
             <div><strong>Descrição:</strong> ${evento.descricao || 'Sem descrição'}</div>
             <div><strong>Convidados:</strong> ${evento.convidados || 'N/A'}</div>
         </div>
