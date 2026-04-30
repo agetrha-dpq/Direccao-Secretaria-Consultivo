@@ -3036,7 +3036,7 @@ function fileToBase64(file) {
                 <tr>
                     <td>${t.titulo}</td>
                     <td><span class="status ${t.prioridade === 'Alta' ? 'atrasado' : 'pendente'}">${t.prioridade}</span></td>
-                    <td>${t.dataLimite || '-'}</td>
+                    <td>${formatarData(t.dataLimite) || '-'}</td>
                     <td>${t.responsavel}</td>
                     <td><span class="status ${t.status === 'Concluída' ? 'concluido' : (t.status === 'Em Curso' ? 'em-andamento' : 'pendente')}">${t.status}</span></td>
                     <td class="action-buttons">
