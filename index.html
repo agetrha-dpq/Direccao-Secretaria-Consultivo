@@ -1627,6 +1627,14 @@
     let currentCalendarDate = new Date();
     let reunioesCalendario = []; // será preenchido pelo GAS
 
+// Função auxiliar para formatar data ISO (YYYY-MM-DD) para DD-MM-YYYY
+function formatarData(dataISO) {
+    if (!dataISO || dataISO.length < 10) return dataISO;
+    const partes = dataISO.substring(0, 10).split('-'); // YYYY-MM-DD
+    if (partes.length !== 3) return dataISO;
+    return `${partes[2]}-${partes[1]}-${partes[0]}`; // DD-MM-YYYY
+}
+	
     // Dados mockados para Resumo Geral (finanças e membros)
     let dadosFinanceiros = JSON.parse(localStorage.getItem('sg_financeiro')) || {
         saldo: 1250000,
@@ -2015,7 +2023,7 @@ const isConsultor = currentUser.role === 'consultor';
     <tr>
       <td>${t.titulo}</td>
       <td><span class="status ${t.prioridade === 'Alta' ? 'atrasado' : 'pendente'}">${t.prioridade}</span></td>
-      <td>${t.dataLimite || '-'}</td>
+      <td>${formatarData(t.dataLimite) || '-'}</td>
       <td>${t.responsavel}</td>
       <td><span class="status ${t.status === 'Concluída' ? 'concluido' : (t.status === 'Em Curso' ? 'em-andamento' : 'pendente')}">${t.status}</span></td>
       <td class="action-buttons">
@@ -2039,7 +2047,7 @@ const isConsultor = currentUser.role === 'consultor';
                 <div><strong>Título:</strong> ${tarefa.titulo}</div>
                 <div><strong>Descrição:</strong> ${tarefa.descricao || 'N/A'}</div>
                 <div><strong>Prioridade:</strong> ${tarefa.prioridade}</div>
-                <div><strong>Data Limite:</strong> ${tarefa.dataLimite || 'N/A'}</div>
+                <div><strong>Data Limite:</strong> ${formatarData(tarefa.dataLimite) || 'N/A'}</div>
                 <div><strong>Responsável:</strong> ${tarefa.responsavel}</div>
                 <div><strong>Status:</strong> ${tarefa.status}</div>
             </div>
@@ -2126,7 +2134,7 @@ const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = atas.map(a => `
     <tr>
       <td>${a.nr}</td>
-      <td>${a.dataReuniao}</td>
+      <td>${formatarData(a.dataReuniao)}</td>
       <td><span class="natureza-badge ${getNaturezaClass(a.natureza)}">${a.natureza}</span></td>
       <td>${a.ordem}</td>
       <td>${a.registro}</td>
@@ -2234,7 +2242,7 @@ function fileToBase64(file) {
     conteudo.innerHTML = `
         <div style="display:grid; gap:15px;">
             <div><strong>Nr Acta:</strong> ${ata.nr}</div>
-            <div><strong>Data Reunião:</strong> ${ata.dataReuniao}</div>
+            <div><strong>Data Reunião:</strong> ${formatarData(ata.dataReuniao)}</div>
             <div><strong>Participantes:</strong> ${ata.participantes}</div>
             <div><strong>Ordem de Trabalho:</strong> ${ata.ordem}</div>
             <div><strong>Natureza:</strong> ${ata.natureza}</div>
@@ -2393,7 +2401,7 @@ function fileToBase64(file) {
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = acoes.map(a => `
     <tr>
-      <td>${a.data}</td>
+      <td>${formatarData(a.data)}</td>
       <td>${a.descricao}</td>
       <td>${a.recorrencia}</td>
       <td>${a.responsavel}</td>
@@ -2514,7 +2522,7 @@ function fileToBase64(file) {
     <tr>
       <td>${e.nome}</td>
       <td>${e.tipo || '-'}</td>
-      <td>${e.dataRegistro || '-'}</td>
+      <td>${formatarData(e.dataRegistro) || '-'}</td>
       <td>${e.dataRealizacao || '-'}</td>
       <td>${e.dataFinda || '-'}</td>
       <td>${e.descricao ? e.descricao.substring(0, 40) : '-'}</td>
@@ -2539,7 +2547,7 @@ function fileToBase64(file) {
         <div style="display:grid; gap:15px;">
             <div><strong>Nome:</strong> ${evento.nome}</div>
             <div><strong>Tipo:</strong> ${evento.tipo || 'N/A'}</div>
-            <div><strong>Data de Registo:</strong> ${evento.dataRegistro || 'N/A'}</div>
+            <div><strong>Data de Registo:</strong> ${formatarData(evento.dataRegistro) || 'N/A'}</div>
             <div><strong>Data de Realização:</strong> ${evento.dataRealizacao || 'N/A'}</div>
             <div><strong>Data Fim:</strong> ${evento.dataFinda || 'N/A'}</div>
             <div><strong>Descrição:</strong> ${evento.descricao || 'Sem descrição'}</div>
@@ -2736,7 +2744,7 @@ function fileToBase64(file) {
             <div><strong>Período:</strong> ${rel.periodo}</div>
             <div><strong>Estado:</strong> ${rel.estado}</div>
             <div><strong>Autor:</strong> ${rel.autor || 'N/A'}</div>
-            <div><strong>Data de Registo:</strong> ${rel.dataRegistro || 'N/A'}</div>
+            <div><strong>Data de Registo:</strong> ${formatarData(rel.dataRegistro) || 'N/A'}</div>
             <div><strong>Descrição:</strong> ${rel.descricao || 'Sem descrição'}</div>
         </div>
     `;
