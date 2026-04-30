@@ -1187,7 +1187,7 @@
             </div>
             <div class="filters">
                 <div class="filter-group"><label>Órgão</label><select class="form-control" id="filter-orgao"><option value="">Todos</option><option>Reunião da Direcção</option><option>Assembleia Geral</option><option>Ass.Ger. Extraordinária</option><option>Deliberação</option></select></div>
-                <div class="filter-group"><label>Estado</label><select class="form-control" id="filter-estado-ata"><option value="">Todos</option><option>Pendente</option><option>Em curso</option><option>Concluído</option></select></div>
+                
                 <div><button class="btn btn-primary" id="btn-filtrar-atas">Aplicar</button></div>
             </div>
             <div class="table-container">
@@ -3016,7 +3016,7 @@ function fileToBase64(file) {
             tbody.innerHTML = atasFiltradas.map(a => `
                 <tr>
                     <td>${a.nr}</td>
-                    <td>${a.dataReuniao}</td>
+                    <td>${formatarData(a.dataReuniao)}</td>
                     <td><span class="natureza-badge ${getNaturezaClass(a.natureza)}">${a.natureza}</span></td>
                     <td>${a.ordem}</td>
                     <td>${a.registro}</td>
