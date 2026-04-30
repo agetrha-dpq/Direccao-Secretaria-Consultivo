@@ -1970,16 +1970,15 @@ async function carregarKPIs() {
         document.getElementById('membros-regulares').innerText = dadosMembros.regulares;
     }
 
-
 async function carregarReunioesCalendario() {
-    const resposta = await fetchGAS('getCalendario');
+  const resposta = await fetchGAS('getCalendario');
+  console.log('Resposta do calendário:', resposta);
   if (!resposta.erro) {
-    reunioesCalendario.length = 0;        // esvazia o array existente
-    reunioesCalendario.push(...resposta); // preenche com os dados do servidor
+    reunioesCalendario.length = 0;
+    reunioesCalendario.push(...resposta);
     renderizarCalendario();
   }
 }
-
     // Navegação
     function alternarPagina(pagina) {
         const secoes = ['visao-geral-content','tarefas-content','atas-content','agenda-content','apoio-direcao-content','relatorios-content','comunicacao-content','contatos-content','seguranca-content'];
