@@ -1980,14 +1980,17 @@ async function carregarKPIs() {
 
 async function carregarReunioesCalendario() {
   const resposta = await fetchGAS('getCalendario');
-  console.log('Resposta do calendário:', resposta);
   if (!resposta.erro) {
+    // Normaliza as datas ISO para YYYY-MM-DD
+    const reunioesFormatadas = resposta.map(r => ({
+      ...r,
+      data: r.data ? r.data.substring(0, 10) : ''
+    }));
     reunioesCalendario.length = 0;
-    reunioesCalendario.push(...resposta);
+    reunioesCalendario.push(...reunioesFormatadas);
     renderizarCalendario();
   }
-}
-    // Navegação
+}    // Navegação
     function alternarPagina(pagina) {
         const secoes = ['visao-geral-content','tarefas-content','atas-content','agenda-content','apoio-direcao-content','relatorios-content','comunicacao-content','contatos-content','seguranca-content'];
         secoes.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
@@ -2347,7 +2350,10 @@ function fileToBase64(file) {
         
         // Verificar reuniões agendadas para este dia
         const dataStr = date.toISOString().split('T')[0];
-        const reunioesDoDia = reunioesCalendario.filter(r => r.data === dataStr);
+        const reunioesDoDia = reunioesCalendario.filter(r => {
+    const dataRegisto = r.data ? r.data.substring(0, 10) : '';
+    return dataRegisto === dataStr;
+});
         reunioesDoDia.forEach(reuniao => {
             const indicator = document.createElement('div');
             indicator.className = 'event-indicator';
