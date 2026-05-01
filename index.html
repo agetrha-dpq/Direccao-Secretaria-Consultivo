@@ -1621,6 +1621,7 @@
     const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbyImQpTQfq5XBLENiFnSms1DbWLEgSh935XUroEzvcKs78Z6B8XrNfpDbq3NVs5jIo/exec';
 	const CANDIDATURAS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmddNGXvdBjU8VZfng30uunDK4OHArVURLz2tyIcJkZ4IMJqxZZEYxZM-yvSSlc6o6Ww/exec';
 	const MEMBROS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwkAAbyTFC8wvyd3RozC6eXzu36VPbTvy9g02Sj4058eRl0SZZRlmRtjoQOscJ_fek1kA/exec';
+	const FINANCEIRO_GAS_URL = 'https://script.google.com/macros/s/AKfycbxN3yGz_oTMzxB-6_PvQtsZQmYftTltqWwWg9lEx_XHacpUnZx_tKzEEVrfrTzsKRlWwQ/exec';
     let isAuthenticated = false;
     let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
     let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
@@ -2073,10 +2074,63 @@ function atualizarGraficosTarefas() {
         });
     }
 
-    // Os gráficos financeiros manterão mockados por enquanto (serão tratados no passo 2.3)
+    // Evolução de Receitas e Despesas
     const ctxFin = document.getElementById('evolucaoFinanceiraChart')?.getContext('2d');
-    // ... (mantenha o código existente para os financeiros)
-}
+    if (ctxFin) {
+        if (chartInstances.evolucaoFinanceira) chartInstances.evolucaoFinanceira.destroy();
+        const labels = dadosFinanceiros.evolucaoMensal?.meses || ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        chartInstances.evolucaoFinanceira = new Chart(ctxFin, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: dadosFinanceiros.receitas || [],
+                        borderColor: '#28a745',
+                        backgroundColor: 'transparent',
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Despesas',
+                        data: dadosFinanceiros.despesas || [],
+                        borderColor: '#dc3545',
+                        backgroundColor: 'transparent',
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+		    // Distribuição de Despesas por Categoria (REAL)
+    const ctxPizzaFin = document.getElementById('pizzaFinanceiroChart')?.getContext('2d');
+    if (ctxPizzaFin) {
+        if (chartInstances.pizzaFinanceiro) chartInstances.pizzaFinanceiro.destroy();
+        const categorias = dadosFinanceiros.categoriasDespesas || {};
+        const labels = Object.keys(categorias);
+        const data = Object.values(categorias);
+        chartInstances.pizzaFinanceiro = new Chart(ctxPizzaFin, {
+            type: 'pie',
+            data: {
+                labels: labels.length ? labels : ['Sem dados'],
+                datasets: [{
+                    data: data.length ? data : [1],
+                    backgroundColor: ['#f39c12', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+		
     function atualizarCardsResumo() {
         document.getElementById('saldo-actual').innerText = dadosFinanceiros.saldo.toLocaleString() + ' Kz';
         document.getElementById('despesa-total').innerText = dadosFinanceiros.despesaTotal.toLocaleString() + ' Kz';
@@ -2122,6 +2176,7 @@ async function carregarReunioesCalendario() {
     inicializarGraficosResumo();
     if (candidaturas.length === 0) carregarCandidaturas();
 	if (dadosMembros.total === 250) carregarDadosMembros();
+	if (dadosFinanceiros.saldo === 1250000) carregarDadosFinanceiros();
 }
     if (pagina === 'relatorios' && relatoriosPlanos.length === 0) carregarRelatoriosPlanos();
     if (pagina === 'seguranca' && acessos.length === 0) carregarAcessos();
@@ -3237,7 +3292,30 @@ async function carregarDadosMembros() {
         console.error('Erro ao carregar dados de membros:', erro);
     }
 }
-	
+
+async function carregarDadosFinanceiros() {
+    try {
+        const resposta = await fetch(FINANCEIRO_GAS_URL + '?action=getDashboardData');
+        const dados = await resposta.json();
+        if (dados.success && dados.data) {
+            const fin = dados.data;
+            // Atualiza os dados financeiros globais
+            dadosFinanceiros.saldo = fin.saldoAtual || 0;
+            dadosFinanceiros.despesaTotal = fin.despesasMes || 0;
+            dadosFinanceiros.receitas = fin.evolucaoMensal?.receitas || [];
+            dadosFinanceiros.despesas = fin.evolucaoMensal?.despesas || [];
+            dadosFinanceiros.evolucaoMensal = fin.evolucaoMensal || {};
+            dadosFinanceiros.categoriasDespesas = fin.categoriasDespesas || {};
+
+            // Refresca os cards e os gráficos
+            atualizarCardsResumo();
+            inicializarGraficosResumo();
+        }
+    } catch (erro) {
+        console.error('Erro ao carregar dados financeiros:', erro);
+    }
+}
+		
 // ===== INICIALIZAÇÃO PRINCIPAL =====
     function inicializarSistema() {
         aplicarPermissoes();
@@ -3247,6 +3325,7 @@ async function carregarDadosMembros() {
         carregarContatos();
         carregarCandidaturas();
 		carregarDadosMembros();
+		carregarDadosFinanceiros();
         carregarAcoes();
         carregarEventos();
         carregarAtas();
