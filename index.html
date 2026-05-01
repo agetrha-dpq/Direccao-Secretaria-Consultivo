@@ -1154,7 +1154,7 @@
             <div class="table-container">
                 <h3 style="margin-bottom: 15px;">Eventos e Reuniões</h3>
                 <table>
-                    <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Responsável</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Nome</th><th>Tipo</th><th>Data de Realização</th><th>Data Finda</th><th>Convidados</th><th>Acções</th></tr></thead>
                     <tbody id="tabela-prazos"></tbody>
                 </table>
             </div>
@@ -2460,7 +2460,7 @@ function fileToBase64(file) {
     async function agendarReuniao(date) {
   if (currentUser.role === 'consultor') return;
 
-  const titulo = prompt('Título da reunião:');
+  const titulo = prompt('Título da Nota - Resuma numa pequena frase:');
   if (!titulo) return;
 
   const dataStr = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
@@ -2937,19 +2937,23 @@ function fileToBase64(file) {
 function carregarTabelaEventosReunioes() {
   const tbody = document.getElementById('tabela-prazos');
   if (!tbody) return;
-  // Usa as ações como fonte de dados (têm data, descricao, status)
-  const dados = acoes.length > 0 ? acoes : [];
-  if (dados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum registo</td></tr>';
+  
+  // Usa os dados da variável global 'eventos' (carregados da página Eventos e Reuniões)
+  if (eventos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum evento</td></tr>';
     return;
   }
-  tbody.innerHTML = dados.slice(0, 10).map(a => `
+  
+  tbody.innerHTML = eventos.slice(0, 10).map(e => `
     <tr>
-      <td>${formatarData(a.data)}</td>
-      <td>${a.descricao}</td>
-      <td>${a.recorrencia || '—'}</td>
-      <td>${a.responsavel || '—'}</td>
-      <td><span class="status ${a.status.replace(' ', '-')}">${a.status}</span></td>
+      <td>${e.nome}</td>
+      <td>${e.tipo || '—'}</td>
+      <td>${formatarData(e.dataRealizacao) || '—'}</td>
+      <td>${formatarData(e.dataFinda) || '—'}</td>
+      <td>${e.convidados || '—'}</td>
+      <td class="action-buttons">
+        <button class="action-btn view" onclick="verEvento(${e.id})"><i class="fas fa-eye"></i></button>
+      </td>
     </tr>
   `).join('');
 }
