@@ -1064,7 +1064,7 @@
                 <div class="login-form-group">
                     <label for="login-password"><i class="fas fa-key"></i> Senha de Acesso</label>
                     <input type="password" id="login-password" class="login-form-control" placeholder="Digite a senha" autocomplete="off" required>
-                    <small style="display:block; margin-top:5px; color:var(--gray);">Presidente: presidente | Consultor: consultor | Secretário: secretario</small>
+                    <small style="display:block; margin-top:5px; color:var(--gray);">Presidentes da Direção Nacional | Consultores | Secretário Gerais</small>
                 </div>
                 <div id="login-error-message" class="login-error-message"><i class="fas fa-exclamation-circle"></i> <span id="login-error-text"></span></div>
                 <div id="login-success-message" class="login-success-message"><i class="fas fa-check-circle"></i> Autenticação bem-sucedida!</div>
@@ -1072,7 +1072,7 @@
         </div>
         <div class="login-modal-footer">
             <button id="btn-login-submit" class="btn-login" type="button"><i class="fas fa-sign-in-alt"></i> Entrar no Sistema</button>
-            <p style="margin-top: 15px; font-size: 12px; color: var(--gray);"><i class="fas fa-info-circle"></i> Acesso restrito aos membros da Secretaria-Geral</p>
+            <p style="margin-top: 15px; font-size: 12px; color: var(--gray);"><i class="fas fa-info-circle"></i> Acesso restrito a Dir, Dep.Con e Sec. Geral</p>
         </div>
     </div>
 </div>
@@ -2890,7 +2890,7 @@ function fileToBase64(file) {
       <td>${c.telefone}</td>
       <td>${c.email}</td>
       <td class="action-buttons">
-        ${!isConsultor ? '<button class="action-btn edit"><i class="fas fa-edit"></i></button>' : ''}
+        ${!isConsultor ? `<button class="action-btn edit" onclick="editarContato(${c.id})"><i class="fas fa-edit"></i></button>` : ''}
       </td>
     </tr>
   `).join('');
@@ -2971,6 +2971,24 @@ function carregarTabelaEventosReunioes() {
         document.getElementById(id).style.display = 'none';
     }
 
+function abrirModalContato(editMode = false, contato = null) {
+    if (currentUser.role === 'consultor') return;
+    document.querySelector('#modal-contato .modal-header h2').innerText = editMode ? 'Editar Contato' : 'Novo Contato';
+    document.getElementById('contato-nome').value = contato ? contato.nome : '';
+    document.getElementById('contato-instituicao').value = contato ? contato.instituicao : '';
+    document.getElementById('contato-cargo').value = contato ? contato.cargo : '';
+    document.getElementById('contato-telefone').value = contato ? contato.telefone : '';
+    document.getElementById('contato-email').value = contato ? contato.email : '';
+    // Guardar o id no formulário para saber se é edição
+    document.getElementById('modal-contato').dataset.editId = contato ? contato.id : '';
+    document.getElementById('modal-contato').style.display = 'flex';
+}
+
+	function editarContato(id) {
+    const contato = contatos.find(c => c.id == id);
+    if (contato) abrirModalContato(true, contato);
+}
+	
 async function exportarVisaoGeralPDF() {
   const btn = document.getElementById('btn-exportar-pdf');
   const originalText = btn.innerHTML;
@@ -3129,9 +3147,7 @@ async function exportarRelatoriosPDF() {
             document.getElementById('modal-tarefa-avancada').style.display = 'flex';
         });
 
-        document.getElementById('btn-novo-contato').addEventListener('click', () => {
-            if (currentUser.role !== 'consultor') document.getElementById('modal-contato').style.display = 'flex';
-        });
+        document.getElementById('btn-novo-contato').addEventListener('click', () => abrirModalContato(false, null));
         document.getElementById('btn-novo-processo').addEventListener('click', () => {
             if (currentUser.role !== 'consultor') document.getElementById('modal-processo').style.display = 'flex';
         });
@@ -3165,21 +3181,24 @@ async function exportarRelatoriosPDF() {
 
         document.getElementById('btn-salvar-tarefa').addEventListener('click', salvarTarefa);
         document.getElementById('btn-salvar-contato').addEventListener('click', async () => {
-            if (currentUser.role === 'consultor') return;
-            const contato = {
-                nome: document.getElementById('contato-nome').value,
-                instituicao: document.getElementById('contato-instituicao').value,
-                cargo: document.getElementById('contato-cargo').value,
-                telefone: document.getElementById('contato-telefone').value,
-                email: document.getElementById('contato-email').value
-            };
-            const resposta = await fetchGAS('saveContato', { contato: contato });
-            if (resposta.sucesso) {
-                mostrarToast('Sucesso', 'Contato adicionado', 'sucesso');
-                fecharModal('modal-contato');
-                carregarContatos();
-            }
-        });
+    if (currentUser.role === 'consultor') return;
+    const modal = document.getElementById('modal-contato');
+    const id = modal.dataset.editId || null;
+    const contato = {
+        id: id ? parseInt(id) : null,
+        nome: document.getElementById('contato-nome').value,
+        instituicao: document.getElementById('contato-instituicao').value,
+        cargo: document.getElementById('contato-cargo').value,
+        telefone: document.getElementById('contato-telefone').value,
+        email: document.getElementById('contato-email').value
+    };
+    const resposta = await fetchGAS('saveContato', { contato: contato });
+    if (resposta.sucesso) {
+        mostrarToast('Sucesso', 'Contato guardado', 'sucesso');
+        fecharModal('modal-contato');
+        carregarContatos();
+    }
+});
 
         document.getElementById('btn-salvar-processo').addEventListener('click', async () => {
             if (currentUser.role === 'consultor') return;
