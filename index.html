@@ -2075,6 +2075,7 @@ async function carregarReunioesCalendario() {
     reunioesCalendario.length = 0;
     reunioesCalendario.push(...reunioesFormatadas);
     renderizarCalendario();
+	atualizarKPIs();
   }
 }
     // Navegação
@@ -2133,6 +2134,7 @@ const isConsultor = currentUser.role === 'consultor';
     </tr>
   `).join('');
 	atualizarGraficosTarefas();
+	atualizarKPIs();
 }
 
     function verTarefa(id) {
@@ -2227,7 +2229,8 @@ const isConsultor = currentUser.role === 'consultor';
     atas.length = 0;               // esvazia o array global existente
   atas.push(...resposta);        // preenche com os dados do servidor
   window.atas = atas;            // mantém compatibilidade)
-
+atualizarKPIs();
+		
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = atas.map(a => `
     <tr>
@@ -2498,6 +2501,7 @@ function fileToBase64(file) {
     acoes.length = 0;
   acoes.push(...resposta);
   window.acoes = acoes;
+atualizarKPIs();
 
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = acoes.map(a => `
@@ -3131,7 +3135,6 @@ async function exportarRelatoriosPDF() {
         carregarRelatoriosPlanos();
         carregarAcessos();
         carregarKPIs();
-        atualizarKPIs();
         atualizarCardsResumo();
         carregarReunioesCalendario();
 
