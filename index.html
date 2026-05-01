@@ -1619,26 +1619,39 @@
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
     const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbyImQpTQfq5XBLENiFnSms1DbWLEgSh935XUroEzvcKs78Z6B8XrNfpDbq3NVs5jIo/exec';
-	const CANDIDATURAS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmddNGXvdBjU8VZfng30uunDK4OHArVURLz2tyIcJkZ4IMJqxZZEYxZM-yvSSlc6o6Ww/exec';
-	const MEMBROS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwkAAbyTFC8wvyd3RozC6eXzu36VPbTvy9g02Sj4058eRl0SZZRlmRtjoQOscJ_fek1kA/exec';
-	const FINANCEIRO_GAS_URL = 'https://script.google.com/macros/s/AKfycbxN3yGz_oTMzxB-6_PvQtsZQmYftTltqWwWg9lEx_XHacpUnZx_tKzEEVrfrTzsKRlWwQ/exec';
-    let isAuthenticated = false;
-    let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
-    let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
-    let tarefas = JSON.parse(localStorage.getItem('sg_tarefas')) || [];
-    let contatos = JSON.parse(localStorage.getItem('sg_contatos')) || [];
-    let processos = JSON.parse(localStorage.getItem('sg_processos')) || [];
-    let acoes = JSON.parse(localStorage.getItem('sg_acoes')) || []; // substitui prazos
-    let eventos = JSON.parse(localStorage.getItem('sg_eventos')) || [];
-    let atas = JSON.parse(localStorage.getItem('sg_atas')) || [];
-    let relatoriosPlanos = JSON.parse(localStorage.getItem('sg_relatorios_planos')) || [];
-    let acessos = JSON.parse(localStorage.getItem('sg_acessos')) || [];
-	let candidaturas = [];
-    let kpisVisiveis = JSON.parse(localStorage.getItem('sg_kpis')) || ['tarefas', 'prazos', 'reunioes', 'deliberacoes'];
+const CANDIDATURAS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmddNGXvdBjU8VZfng30uunDK4OHArVURLz2tyIcJkZ4IMJqxZZEYxZM-yvSSlc6o6Ww/exec';
+const MEMBROS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwkAAbyTFC8wvyd3RozC6eXzu36VPbTvy9g02Sj4058eRl0SZZRlmRtjoQOscJ_fek1kA/exec';
+const FINANCEIRO_GAS_URL = 'https://script.google.com/macros/s/AKfycbxN3yGz_oTMzxB-6_PvQtsZQmYftTltqWwWg9lEx_XHacpUnZx_tKzEEVrfrTzsKRlWwQ/exec';
+let isAuthenticated = false;
+let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
 
-    // Estado do calendário
-    let currentCalendarDate = new Date();
-    let reunioesCalendario = []; // será preenchido pelo GAS
+// Função segura para ler localStorage
+function lerLocalStorage(chave, fallback) {
+    try {
+        const item = localStorage.getItem(chave);
+        return item ? JSON.parse(item) : fallback;
+    } catch (e) {
+        console.warn('localStorage corrompido para "' + chave + '" – a usar fallback.', e);
+        return fallback;
+    }
+}
+
+// Leitura segura de todas as variáveis (com as chaves corretas)
+let notificacoes = lerLocalStorage('notificacoes_sg', []);
+let tarefas = lerLocalStorage('sg_tarefas', []);
+let contatos = lerLocalStorage('sg_contatos', []);
+let processos = lerLocalStorage('sg_processos', []);
+let acoes = lerLocalStorage('sg_acoes', []);
+let eventos = lerLocalStorage('sg_eventos', []);
+let atas = lerLocalStorage('sg_atas', []);
+let relatoriosPlanos = lerLocalStorage('sg_relatorios_planos', []);
+let acessos = lerLocalStorage('sg_acessos', []);
+let candidaturas = [];
+let kpisVisiveis = lerLocalStorage('sg_kpis', ['tarefas', 'prazos', 'reunioes', 'deliberacoes']);
+
+// Estado do calendário
+let currentCalendarDate = new Date();
+let reunioesCalendario = []; // será preenchido pelo GAS
 
 // Função auxiliar para formatar data ISO (YYYY-MM-DD) para DD-MM-YYYY
 function formatarData(dataISO) {
@@ -1647,26 +1660,26 @@ function formatarData(dataISO) {
     if (partes.length !== 3) return dataISO;
     return `${partes[2]}-${partes[1]}-${partes[0]}`; // DD-MM-YYYY
 }
-	
-    // Dados mockados para Resumo Geral (finanças e membros)
-    let dadosFinanceiros = JSON.parse(localStorage.getItem('sg_financeiro')) || {
-        saldo: 1250000,
-        despesaTotal: 450000,
-        receitas: [800000, 850000, 900000, 950000],
-        despesas: [400000, 420000, 450000, 480000]
-    };
-    let dadosMembros = JSON.parse(localStorage.getItem('sg_membros')) || {
-        total: 250,
-        categorias: {
-            'Sócio Efectivo': 150,
-            'Sócio Aderente': 50,
-            'Sócio Colectivo': 30,
-            'Sócio Honorário': 10,
-            'Sócio Correspondente': 10
-        },
-        inadimplentes: 20,
-        regulares: 230
-    };
+
+// Dados financeiros e membros também protegidos com lerLocalStorage
+let dadosFinanceiros = lerLocalStorage('sg_financeiro', {
+    saldo: 1250000,
+    despesaTotal: 450000,
+    receitas: [800000, 850000, 900000, 950000],
+    despesas: [400000, 420000, 450000, 480000]
+});
+let dadosMembros = lerLocalStorage('sg_membros', {
+    total: 250,
+    categorias: {
+        'Sócio Efectivo': 150,
+        'Sócio Aderente': 50,
+        'Sócio Colectivo': 30,
+        'Sócio Honorário': 10,
+        'Sócio Correspondente': 10
+    },
+    inadimplentes: 20,
+    regulares: 230
+});
 
     // Funções de autenticação
     function mostrarModalLogin() { document.getElementById('login-modal').classList.remove('hidden'); document.body.classList.add('login-active'); }
