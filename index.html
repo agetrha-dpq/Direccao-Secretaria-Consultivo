@@ -2971,6 +2971,90 @@ function carregarTabelaEventosReunioes() {
         document.getElementById(id).style.display = 'none';
     }
 
+async function exportarVisaoGeralPDF() {
+  const btn = document.getElementById('btn-exportar-pdf');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando PDF...';
+  btn.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const content = document.getElementById('visao-geral-content');
+    const canvas = await html2canvas(content, { scale: 2, useCORS: true, logging: false });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 190;
+    const pageHeight = 280;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 10;
+
+    pdf.setFontSize(18);
+    pdf.setTextColor(26, 78, 142);
+    pdf.text('Visão Geral - Secretaria-Geral AGETRHA', 105, 15, { align: 'center' });
+    position = 25;
+
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight + 25;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save('visao-geral.pdf');
+  } catch (error) {
+    alert('Erro ao gerar PDF: ' + error.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+async function exportarRelatoriosPDF() {
+  const btn = document.getElementById('btn-exportar-relatorio');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando PDF...';
+  btn.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const content = document.getElementById('relatorios-content');
+    const canvas = await html2canvas(content, { scale: 2, useCORS: true, logging: false });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 190;
+    const pageHeight = 280;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 10;
+
+    pdf.setFontSize(18);
+    pdf.setTextColor(26, 78, 142);
+    pdf.text('Relatórios e Planos - Secretaria-Geral AGETRHA', 105, 15, { align: 'center' });
+    position = 25;
+
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight + 25;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save('relatorios-planos.pdf');
+  } catch (error) {
+    alert('Erro ao gerar PDF: ' + error.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+	
     // Inicialização principal
         // ===== INICIALIZAÇÃO PRINCIPAL (SUBSTITUIR TUDO DAQUI ATÉ AO FIM) =====
     function inicializarSistema() {
@@ -3102,8 +3186,8 @@ function carregarTabelaEventosReunioes() {
             renderizarCalendario();
         });
 
-        document.getElementById('btn-exportar-pdf').addEventListener('click', () => alert('Exportação simulada'));
-        document.getElementById('btn-exportar-relatorio').addEventListener('click', () => alert('Exportação simulada'));
+        document.getElementById('btn-exportar-pdf').addEventListener('click', exportarVisaoGeralPDF);
+document.getElementById('btn-exportar-relatorio').addEventListener('click', exportarRelatoriosPDF);
 
         document.getElementById('btn-filtrar-atas').addEventListener('click', () => {
             const orgaoFiltro = document.getElementById('filter-orgao').value;
