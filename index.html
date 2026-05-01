@@ -2528,6 +2528,44 @@ atualizarKPIs();
   });
 }
 
+function filtrarAcoesLocalmente(filtroStatus) {
+  const tbody = document.getElementById('tabela-acoes');
+  if (!tbody) return;
+
+  let acoesFiltradas = acoes;
+  if (filtroStatus !== 'all') {
+    acoesFiltradas = acoes.filter(a => a.status === filtroStatus);
+  }
+
+  if (acoesFiltradas.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Nenhuma ação encontrada</td></tr>`;
+  } else {
+    const isConsultor = currentUser.role === 'consultor';
+    tbody.innerHTML = acoesFiltradas.map(a => `
+      <tr>
+        <td>${formatarData(a.data)}</td>
+        <td>${a.descricao}</td>
+        <td>${a.recorrencia}</td>
+        <td>${a.responsavel}</td>
+        <td><span class="status ${a.status.replace(' ', '-')}">${a.status}</span></td>
+        <td class="action-buttons">
+          <button class="action-btn view" onclick="verAcao(${a.id})"><i class="fas fa-eye"></i></button>
+          ${!isConsultor ? `
+          <button class="action-btn edit" onclick="editarAcao(${a.id})"><i class="fas fa-edit"></i></button>
+          <button class="action-btn delete" onclick="excluirAcao(${a.id})"><i class="fas fa-trash"></i></button>
+          ` : ''}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Atualizar abas ativas
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.filter === filtroStatus) btn.classList.add('active');
+  });
+}
+	
     function verAcao(id) {
     const acao = acoes.find(a => a.id == id);
     if (!acao) return;
@@ -3236,11 +3274,17 @@ async function exportarRelatoriosPDF() {
         document.getElementById('btn-salvar-relatorio').addEventListener('click', salvarRelatorio);
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const filtro = btn.dataset.filter;
-                carregarAcoes(filtro);
-            });
-        });
+    btn.addEventListener('click', () => {
+        const filtro = btn.dataset.filter;
+        if (acoes.length > 0) {
+            // Dados já carregados → filtragem local instantânea
+            filtrarAcoesLocalmente(filtro);
+        } else {
+            // Primeira carga → buscar ao servidor
+            carregarAcoes(filtro);
+        }
+    });
+});
 
         document.getElementById('calendar-prev-month').addEventListener('click', () => {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
