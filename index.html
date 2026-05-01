@@ -3296,11 +3296,15 @@ async function carregarDadosMembros() {
 
 async function carregarDadosFinanceiros() {
     try {
+        console.log('🔍 Iniciando carregamento financeiro...');
         const resposta = await fetch(FINANCEIRO_GAS_URL + '?action=getDashboardData');
         const dados = await resposta.json();
+        console.log('📦 Dados financeiros recebidos:', dados);
         if (dados.success && dados.data) {
             const fin = dados.data;
-            // Atualiza os dados financeiros globais
+            console.log('💵 Saldo atual recebido:', fin.saldoAtual);
+            console.log('💸 Despesas mês recebidas:', fin.despesasMes);
+            
             dadosFinanceiros.saldo = fin.saldoAtual || 0;
             dadosFinanceiros.despesaTotal = fin.despesasMes || 0;
             dadosFinanceiros.receitas = fin.evolucaoMensal?.receitas || [];
@@ -3308,12 +3312,13 @@ async function carregarDadosFinanceiros() {
             dadosFinanceiros.evolucaoMensal = fin.evolucaoMensal || {};
             dadosFinanceiros.categoriasDespesas = fin.categoriasDespesas || {};
 
-            // Refresca os cards e os gráficos
+            console.log('🔄 Atualizando cards e gráficos...');
             atualizarCardsResumo();
             inicializarGraficosResumo();
+            console.log('✅ Atualização concluída');
         }
     } catch (erro) {
-        console.error('Erro ao carregar dados financeiros:', erro);
+        console.error('❌ Erro financeiro:', erro);
     }
 }
 		
