@@ -2133,12 +2133,19 @@ function atualizarGraficosTarefas() {
 }
 		
     function atualizarCardsResumo() {
-        document.getElementById('saldo-actual').innerText = dadosFinanceiros.saldo.toLocaleString() + ' Kz';
-        document.getElementById('despesa-total').innerText = dadosFinanceiros.despesaTotal.toLocaleString() + ' Kz';
-        document.getElementById('total-membros').innerText = dadosMembros.total;
-        document.getElementById('inadimplentes').innerText = dadosMembros.inadimplentes;
-        document.getElementById('membros-regulares').innerText = dadosMembros.regulares;
-    }
+    console.log('📊 atualizarCardsResumo chamada');
+    const elSaldo = document.getElementById('saldo-actual');
+    const elDespesa = document.getElementById('despesa-total');
+    console.log('Elementos encontrados:', { elSaldo, elDespesa });
+    console.log('Valores:', { saldo: dadosFinanceiros.saldo, despesaTotal: dadosFinanceiros.despesaTotal });
+    
+    if (elSaldo) elSaldo.innerText = dadosFinanceiros.saldo.toLocaleString() + ' Kz';
+    if (elDespesa) elDespesa.innerText = dadosFinanceiros.despesaTotal.toLocaleString() + ' Kz';
+    
+    document.getElementById('total-membros').innerText = dadosMembros.total;
+    document.getElementById('inadimplentes').innerText = dadosMembros.inadimplentes;
+    document.getElementById('membros-regulares').innerText = dadosMembros.regulares;
+}
 
 async function carregarReunioesCalendario() {
   const resposta = await fetchGAS('getCalendario');
