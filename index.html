@@ -2885,8 +2885,9 @@ function fileToBase64(file) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar contatos</td></tr>';
     return;
   }
-  const contatos = resposta;         // array de contatos vindo do GAS
-  window.contatos = contatos;        // atualiza a variável global
+    contatos.length = 0;               // esvazia o array global existente
+  contatos.push(...resposta);        // preenche com os dados do servidor
+  window.contatos = contatos;        // mantém compatibilidade
 
   const isConsultor = currentUser.role === 'consultor';
   tbody.innerHTML = contatos.map(c => `
