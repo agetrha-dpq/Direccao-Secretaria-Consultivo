@@ -2079,19 +2079,26 @@ async function carregarReunioesCalendario() {
 }
     // Navegação
     function alternarPagina(pagina) {
-        const secoes = ['visao-geral-content','tarefas-content','atas-content','agenda-content','apoio-direcao-content','relatorios-content','comunicacao-content','contatos-content','seguranca-content'];
-        secoes.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-        document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-        const alvo = document.getElementById(pagina + '-content'); if (alvo) alvo.style.display = 'block';
-        const activeLink = document.querySelector(`[data-page="${pagina}"]`); if (activeLink) activeLink.classList.add('active');
-        if (pagina === 'comunicacao') carregarEventos();
-        if (pagina === 'atas') carregarAtas();
-        if (pagina === 'agenda') { renderizarCalendario(); carregarAcoes(); }
-        if (pagina === 'apoio-direcao') { atualizarCardsResumo(); inicializarGraficosResumo(); }
-        if (pagina === 'relatorios') carregarRelatoriosPlanos();
-        if (pagina === 'seguranca') carregarAcessos();
-    }
+    const secoes = ['visao-geral-content','tarefas-content','atas-content','agenda-content','apoio-direcao-content','relatorios-content','comunicacao-content','contatos-content','seguranca-content'];
+    secoes.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+    const alvo = document.getElementById(pagina + '-content'); if (alvo) alvo.style.display = 'block';
+    const activeLink = document.querySelector(`[data-page="${pagina}"]`); if (activeLink) activeLink.classList.add('active');
 
+    // Só recarrega a tabela se o array ainda estiver vazio (primeira carga)
+    if (pagina === 'comunicacao' && eventos.length === 0) carregarEventos();
+    if (pagina === 'atas' && atas.length === 0) carregarAtas();
+    if (pagina === 'agenda') { 
+        renderizarCalendario(); 
+        if (acoes.length === 0) carregarAcoes(); 
+    }
+    if (pagina === 'apoio-direcao') { 
+        atualizarCardsResumo(); 
+        inicializarGraficosResumo(); 
+    }
+    if (pagina === 'relatorios' && relatoriosPlanos.length === 0) carregarRelatoriosPlanos();
+    if (pagina === 'seguranca' && acessos.length === 0) carregarAcessos();
+}
     // Tarefas
     async function carregarTarefas() {
   const tbody = document.getElementById('tabela-tarefas');
