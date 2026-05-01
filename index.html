@@ -2155,26 +2155,42 @@ function atualizarGraficosTarefas() {
 		    // Distribuição de Despesas por Categoria (REAL)
     const ctxPizzaFin = document.getElementById('pizzaFinanceiroChart')?.getContext('2d');
     if (ctxPizzaFin) {
-        if (chartInstances.pizzaFinanceiro) chartInstances.pizzaFinanceiro.destroy();
-        const categorias = dadosFinanceiros.categoriasDespesas || {};
-        const labels = Object.keys(categorias);
-        const data = Object.values(categorias);
-        chartInstances.pizzaFinanceiro = new Chart(ctxPizzaFin, {
-            type: 'pie',
-            data: {
-                labels: labels.length ? labels : ['Sem dados'],
-                datasets: [{
-                    data: data.length ? data : [1],
-                    backgroundColor: ['#f39c12', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+    if (chartInstances.pizzaFinanceiro) chartInstances.pizzaFinanceiro.destroy();
+
+    const despesas = dadosFinanceiros.despesaTotal || 0;
+    const saldo = dadosFinanceiros.saldo || 0;
+
+    // Evitar gráfico vazio
+    const labels = ['Despesas Totais', 'Saldo Actual'];
+    const data = [despesas, saldo];
+
+    chartInstances.pizzaFinanceiro = new Chart(ctxPizzaFin, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#e74c3c', '#2ecc71']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${context.label}: ${value.toLocaleString()} Kz (${percent}%)`;
+                        }
+                    }
+                }
             }
-        });
-    }
+        }
+    });
 }
 		
     function atualizarCardsResumo() {
