@@ -1781,20 +1781,16 @@ function verificarSessao() {
   return auth && authToken !== null;
 }
 
-async function fetchGAS(action, extraData = {}) {
+async function fetchGAS(action, extraData = {}, baseUrl = null) {
   try {
-    // Monta o payload completo (com token e extraData)
+    const url = baseUrl || AUTH_GAS_URL;
     const payload = { action, token: authToken, ...extraData };
-    
-    // Envia como FormData (evita preflight CORS)
     const formData = new FormData();
-    formData.append('json', JSON.stringify(payload));  // único parâmetro com JSON
-
-    const resposta = await fetch(AUTH_GAS_URL, {
+    formData.append('json', JSON.stringify(payload));
+    const resposta = await fetch(url, {
       method: 'POST',
-      body: formData   // sem 'Content-Type' manual → sem preflight
+      body: formData
     });
-
     const dados = await resposta.json();
     if (dados.erro) {
       console.error('Erro GAS (' + action + '):', dados.erro);
@@ -1807,7 +1803,8 @@ async function fetchGAS(action, extraData = {}) {
     return { erro: erro.message };
   }
 }
-    function aplicarPermissoes() { 
+	
+	function aplicarPermissoes() { 
         const role = currentUser.role; 
         // Exibe todas as páginas para presidente e secretario; consultor vê tudo mas com permissões reduzidas
         document.querySelectorAll('.sidebar-menu a').forEach(link => { 
@@ -3315,30 +3312,49 @@ async function carregarDadosMembros() {
 }
 
 async function carregarDadosFinanceiros() {
+    console.log('🔍 Iniciando carregamento financeiro...');
     try {
-        console.log('🔍 Iniciando carregamento financeiro...');
-        const resposta = await fetch(FINANCEIRO_GAS_URL + '?action=getDashboardData');
-        const dados = await resposta.json();
-        console.log('📦 Dados financeiros recebidos:', dados);
-        if (dados.success && dados.data) {
-            const fin = dados.data;
+        const resposta = await fetchGAS('getDashboardData', {}, FINANCEIRO_GAS_URL);
+        console.log('📦 Dados financeiros recebidos:', resposta);
+        
+        if (resposta && resposta.success && resposta.data) {
+            const fin = resposta.data;
             console.log('💵 Saldo atual recebido:', fin.saldoAtual);
             console.log('💸 Despesas mês recebidas:', fin.despesasMes);
             
-            dadosFinanceiros.saldo = fin.saldoAtual || 0;
-            dadosFinanceiros.despesaTotal = fin.despesasMes || 0;
-            dadosFinanceiros.receitas = fin.evolucaoMensal?.receitas || [];
-            dadosFinanceiros.despesas = fin.evolucaoMensal?.despesas || [];
-            dadosFinanceiros.evolucaoMensal = fin.evolucaoMensal || {};
-            dadosFinanceiros.categoriasDespesas = fin.categoriasDespesas || {};
-
+            // Só substitui se o valor for um número (incluindo zero)
+            if (typeof fin.saldoAtual === 'number') {
+                dadosFinanceiros.saldo = fin.saldoAtual;
+            }
+            if (typeof fin.despesasMes === 'number') {
+                dadosFinanceiros.despesaTotal = fin.despesasMes;
+            }
+            if (fin.evolucaoMensal) {
+                dadosFinanceiros.evolucaoMensal = fin.evolucaoMensal;
+                if (fin.evolucaoMensal.receitas) dadosFinanceiros.receitas = fin.evolucaoMensal.receitas;
+                if (fin.evolucaoMensal.despesas) dadosFinanceiros.despesas = fin.evolucaoMensal.despesas;
+            }
+            if (fin.categoriasDespesas && Object.keys(fin.categoriasDespesas).length > 0) {
+                dadosFinanceiros.categoriasDespesas = fin.categoriasDespesas;
+            } else if (fin.categoriasDespesas) {
+                // Se veio objeto vazio, mantém o fallback
+                console.warn('Categorias de despesas vazias, mantendo fallback.');
+            }
+            
+            // Guarda no localStorage para sessões futuras
+            localStorage.setItem('sg_financeiro', JSON.stringify(dadosFinanceiros));
+            
             console.log('🔄 Atualizando cards e gráficos...');
             atualizarCardsResumo();
             inicializarGraficosResumo();
             console.log('✅ Atualização concluída');
+        } else {
+            console.warn('⚠️ API financeira não retornou dados válidos. Mantendo fallback.');
+            mostrarToast('Aviso', 'Dados financeiros indisponíveis. A mostrar valores de fallback.', 'alerta');
         }
     } catch (erro) {
         console.error('❌ Erro financeiro:', erro);
+        mostrarToast('Erro', 'Falha ao carregar dados financeiros.', 'erro');
     }
 }
 		
