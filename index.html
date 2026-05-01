@@ -3347,49 +3347,100 @@ async function carregarDadosMembros() {
 }
 
 async function carregarDadosFinanceiros() {
-    console.log('🔍 Iniciando carregamento financeiro (GET direto)...');
+    console.log('🔍 Iniciando carregamento financeiro (transações + faturas)...');
     try {
-        // Chamada direta via GET com o parâmetro action
-        const resposta = await fetch(`${FINANCEIRO_GAS_URL}?action=getDashboardData`);
-        const dados = await resposta.json();
-        console.log('📦 Dados financeiros recebidos:', dados);
-        
-        if (dados && dados.success && dados.data) {
-            const fin = dados.data;
-            console.log('💵 Saldo atual recebido:', fin.saldoAtual);
-            console.log('💸 Despesas mês recebidas:', fin.despesasMes);
-            
-            // Atualizar apenas se forem números válidos
-            if (typeof fin.saldoAtual === 'number') {
-                dadosFinanceiros.saldo = fin.saldoAtual;
+        await Promise.all([carregarTransacoesFinanceiro(), carregarFacturasFinanceiro()]);
+
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth() + 1;
+        const anoAtual = hoje.getFullYear();
+
+        const parseData = (str) => {
+            if (!str) return null;
+            const partes = str.includes('/') ? str.split('/') : str.split('-');
+            if (partes.length === 3) {
+                return new Date(partes[2], partes[1] - 1, partes[0]);
             }
-            if (typeof fin.despesasMes === 'number') {
-                dadosFinanceiros.despesaTotal = fin.despesasMes;
-            }
-            if (fin.evolucaoMensal) {
-                dadosFinanceiros.evolucaoMensal = fin.evolucaoMensal;
-                if (fin.evolucaoMensal.receitas) dadosFinanceiros.receitas = fin.evolucaoMensal.receitas;
-                if (fin.evolucaoMensal.despesas) dadosFinanceiros.despesas = fin.evolucaoMensal.despesas;
-            }
-            if (fin.categoriasDespesas && Object.keys(fin.categoriasDespesas).length > 0) {
-                dadosFinanceiros.categoriasDespesas = fin.categoriasDespesas;
-            }
-            
-            // Guardar no localStorage
-            localStorage.setItem('sg_financeiro', JSON.stringify(dadosFinanceiros));
-            
-            console.log('🔄 Atualizando cards e gráficos...');
-            atualizarCardsResumo();
-            // Só desenha gráficos se a aba estiver visível
-            if (document.getElementById('apoio-direcao-content').style.display !== 'none') {
-                inicializarGraficosResumo();
-            }
-            console.log('✅ Atualização concluída');
-        } else {
-            console.warn('⚠️ API financeira não retornou dados válidos. Mantendo fallback.');
+            return new Date(str);
+        };
+
+        // Receitas e despesas do mês
+        const receitasTransacoesMes = transacoesFinanceiras
+            .filter(t => t.tipo === 'receita' && t.status === 'pago' && parseData(t.data)?.getMonth()+1 === mesAtual && parseData(t.data)?.getFullYear() === anoAtual)
+            .reduce((s, t) => s + parseFloat(t.valor || 0), 0);
+        const receitasFaturasMes = facturasFinanceiras
+            .filter(f => f.estado === 'pago' && parseData(f.data)?.getMonth()+1 === mesAtual && parseData(f.data)?.getFullYear() === anoAtual)
+            .reduce((s, f) => s + parseFloat(f.total || f.valor || 0), 0);
+        const receitasMes = receitasTransacoesMes + receitasFaturasMes;
+
+        const despesasMes = transacoesFinanceiras
+            .filter(t => t.tipo === 'despesa' && t.status === 'pago' && parseData(t.data)?.getMonth()+1 === mesAtual && parseData(t.data)?.getFullYear() === anoAtual)
+            .reduce((s, t) => s + parseFloat(t.valor || 0), 0);
+
+        // Saldo actual (total histórico)
+        const receitasTotal = transacoesFinanceiras
+            .filter(t => t.tipo === 'receita' && t.status === 'pago')
+            .reduce((s, t) => s + parseFloat(t.valor || 0), 0) +
+            facturasFinanceiras
+            .filter(f => f.estado === 'pago')
+            .reduce((s, f) => s + parseFloat(f.total || f.valor || 0), 0);
+        const despesasTotal = transacoesFinanceiras
+            .filter(t => t.tipo === 'despesa' && t.status === 'pago')
+            .reduce((s, t) => s + parseFloat(t.valor || 0), 0);
+        const saldoAtual = receitasTotal - despesasTotal;
+
+        // Atualizar objeto global
+        dadosFinanceiros.saldo = saldoAtual;
+        dadosFinanceiros.despesaTotal = despesasTotal;
+
+        // Evolução mensal (últimos 6 meses)
+        const ultimos6Meses = [];
+        const receitasPorMes = [];
+        const despesasPorMes = [];
+        for (let i = 5; i >= 0; i--) {
+            const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+            const mes = data.getMonth() + 1;
+            const ano = data.getFullYear();
+            const nomeMes = data.toLocaleDateString('pt-PT', { month: 'short' });
+            ultimos6Meses.push(nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1, 3));
+
+            const recMes = transacoesFinanceiras
+                .filter(t => t.tipo === 'receita' && t.status === 'pago' && parseData(t.data)?.getMonth()+1 === mes && parseData(t.data)?.getFullYear() === ano)
+                .reduce((s, t) => s + parseFloat(t.valor || 0), 0) +
+                facturasFinanceiras
+                .filter(f => f.estado === 'pago' && parseData(f.data)?.getMonth()+1 === mes && parseData(f.data)?.getFullYear() === ano)
+                .reduce((s, f) => s + parseFloat(f.total || f.valor || 0), 0);
+            const despMes = transacoesFinanceiras
+                .filter(t => t.tipo === 'despesa' && t.status === 'pago' && parseData(t.data)?.getMonth()+1 === mes && parseData(t.data)?.getFullYear() === ano)
+                .reduce((s, t) => s + parseFloat(t.valor || 0), 0);
+            receitasPorMes.push(recMes);
+            despesasPorMes.push(despMes);
         }
+        dadosFinanceiros.evolucaoMensal = { meses: ultimos6Meses, receitas: receitasPorMes, despesas: despesasPorMes };
+        dadosFinanceiros.receitas = receitasPorMes;
+        dadosFinanceiros.despesas = despesasPorMes;
+
+        // Categorias de despesas do mês atual
+        const categoriasMap = {};
+        transacoesFinanceiras
+            .filter(t => t.tipo === 'despesa' && t.status === 'pago' && parseData(t.data)?.getMonth()+1 === mesAtual && parseData(t.data)?.getFullYear() === anoAtual)
+            .forEach(t => {
+                const cat = t.natureza || 'Outros';
+                categoriasMap[cat] = (categoriasMap[cat] || 0) + parseFloat(t.valor || 0);
+            });
+        dadosFinanceiros.categoriasDespesas = categoriasMap;
+
+        // Guardar no localStorage
+        localStorage.setItem('sg_financeiro', JSON.stringify(dadosFinanceiros));
+
+        // Atualizar interface
+        atualizarCardsResumo();
+        if (document.getElementById('apoio-direcao-content').style.display !== 'none') {
+            inicializarGraficosResumo();
+        }
+        console.log('✅ Dados financeiros atualizados:', { saldoAtual, receitasMes, despesasMes });
     } catch (erro) {
-        console.error('❌ Erro financeiro:', erro);
+        console.error('❌ Erro ao carregar dados financeiros:', erro);
     }
 }
 		
