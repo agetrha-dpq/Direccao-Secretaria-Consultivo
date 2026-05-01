@@ -1893,15 +1893,98 @@ async function carregarKPIs() {
     let chartInstances = {};
     
     function inicializarGraficos() {
-        if (graficosInicializados) return;
-        const ctx1 = document.getElementById('evolucaoPrazosChart')?.getContext('2d');
-        const ctx2 = document.getElementById('tarefasDepartamentoChart')?.getContext('2d');
-        if (!ctx1 || !ctx2) return;
-        chartInstances.evolucaoPrazos = new Chart(ctx1, { type: 'line', data: { labels: ['Sem1', 'Sem2', 'Sem3', 'Sem4'], datasets: [{ label: 'Tarefas concluídas', data: [4, 6, 5, 8], borderColor: '#1a4e8e' }] } });
-        chartInstances.tarefasDepartamento = new Chart(ctx2, { type: 'doughnut', data: { labels: ['Projetos', 'Administração', 'Comunicação'], datasets: [{ data: [45, 30, 25], backgroundColor: ['#1a4e8e','#28a745','#ffc107'] }] }, options: { cutout: '70%', layout: { padding: 30 }, plugins: { legend: { position: 'bottom' } } } });
-        graficosInicializados = true;
-    }
+    if (graficosInicializados) return;
+    const ctx1 = document.getElementById('evolucaoPrazosChart')?.getContext('2d');
+    const ctx2 = document.getElementById('tarefasDepartamentoChart')?.getContext('2d');
+    if (!ctx1 || !ctx2) return;
 
+    // Gráfico de evolução (inicialmente vazio, atualizado depois)
+    chartInstances.evolucaoPrazos = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: ['Sem1', 'Sem2', 'Sem3', 'Sem4'],
+            datasets: [{
+                label: 'Tarefas concluídas',
+                data: [0, 0, 0, 0],
+                borderColor: '#1a4e8e',
+                backgroundColor: 'transparent',
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+
+    // Gráfico de distribuição por prioridade
+    chartInstances.tarefasDepartamento = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Alta', 'Média', 'Baixa'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: ['#dc3545', '#ffc107', '#28a745']
+            }]
+        },
+        options: {
+            cutout: '70%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    graficosInicializados = true;
+}
+
+function atualizarGraficosTarefas() {
+  if (!chartInstances.evolucaoPrazos || !chartInstances.tarefasDepartamento) return;
+
+  // --- Gráfico de evolução: tarefas concluídas por semana (últimas 4 semanas) ---
+  const hoje = new Date();
+  const msSemana = 7 * 24 * 60 * 60 * 1000;
+  const semanas = [0, 1, 2, 3].map(i => new Date(hoje - i * msSemana));
+
+  const concluidasPorSemana = [0, 0, 0, 0]; // da mais antiga para a mais recente
+  tarefas.forEach(t => {
+    if (t.status !== 'Concluída' || !t.dataCriacao) return;
+    const dataCriacao = new Date(t.dataCriacao);
+    if (isNaN(dataCriacao)) return;
+    for (let i = 0; i < 4; i++) {
+      const inicio = new Date(semanas[i]);
+      inicio.setHours(0, 0, 0, 0);
+      const fim = new Date(inicio.getTime() + msSemana - 1);
+      if (dataCriacao >= inicio && dataCriacao <= fim) {
+        concluidasPorSemana[i]++; // i=0 é a semana mais recente
+        break;
+      }
+    }
+  });
+  // inverter para ordem cronológica (Sem1 = mais antiga)
+  concluidasPorSemana.reverse();
+  chartInstances.evolucaoPrazos.data.datasets[0].data = concluidasPorSemana;
+  chartInstances.evolucaoPrazos.update();
+
+  // --- Gráfico de distribuição por prioridade ---
+  const contagem = { Alta: 0, Média: 0, Baixa: 0 };
+  tarefas.forEach(t => {
+    if (contagem[t.prioridade] !== undefined) contagem[t.prioridade]++;
+  });
+  chartInstances.tarefasDepartamento.data.datasets[0].data = [
+    contagem['Alta'] || 0,
+    contagem['Média'] || 0,
+    contagem['Baixa'] || 0
+  ];
+  chartInstances.tarefasDepartamento.update();
+}
+	
     // Gráficos do Resumo Geral
     function inicializarGraficosResumo() {
         // Evolução Financeira
@@ -2042,6 +2125,7 @@ const isConsultor = currentUser.role === 'consultor';
       </td>
     </tr>
   `).join('');
+	atualizarGraficosTarefas();
 }
 
     function verTarefa(id) {
