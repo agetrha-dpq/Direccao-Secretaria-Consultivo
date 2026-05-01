@@ -3312,17 +3312,19 @@ async function carregarDadosMembros() {
 }
 
 async function carregarDadosFinanceiros() {
-    console.log('🔍 Iniciando carregamento financeiro...');
+    console.log('🔍 Iniciando carregamento financeiro (GET direto)...');
     try {
-        const resposta = await fetchGAS('getDashboardData', {}, FINANCEIRO_GAS_URL);
-        console.log('📦 Dados financeiros recebidos:', resposta);
+        // Chamada direta via GET com o parâmetro action
+        const resposta = await fetch(`${FINANCEIRO_GAS_URL}?action=getDashboardData`);
+        const dados = await resposta.json();
+        console.log('📦 Dados financeiros recebidos:', dados);
         
-        if (resposta && resposta.success && resposta.data) {
-            const fin = resposta.data;
+        if (dados && dados.success && dados.data) {
+            const fin = dados.data;
             console.log('💵 Saldo atual recebido:', fin.saldoAtual);
             console.log('💸 Despesas mês recebidas:', fin.despesasMes);
             
-            // Só substitui se o valor for um número (incluindo zero)
+            // Atualizar apenas se forem números válidos
             if (typeof fin.saldoAtual === 'number') {
                 dadosFinanceiros.saldo = fin.saldoAtual;
             }
@@ -3336,25 +3338,23 @@ async function carregarDadosFinanceiros() {
             }
             if (fin.categoriasDespesas && Object.keys(fin.categoriasDespesas).length > 0) {
                 dadosFinanceiros.categoriasDespesas = fin.categoriasDespesas;
-            } else if (fin.categoriasDespesas) {
-                // Se veio objeto vazio, mantém o fallback
-                console.warn('Categorias de despesas vazias, mantendo fallback.');
             }
             
-            // Guarda no localStorage para sessões futuras
+            // Guardar no localStorage
             localStorage.setItem('sg_financeiro', JSON.stringify(dadosFinanceiros));
             
             console.log('🔄 Atualizando cards e gráficos...');
             atualizarCardsResumo();
-            inicializarGraficosResumo();
+            // Só desenha gráficos se a aba estiver visível
+            if (document.getElementById('apoio-direcao-content').style.display !== 'none') {
+                inicializarGraficosResumo();
+            }
             console.log('✅ Atualização concluída');
         } else {
             console.warn('⚠️ API financeira não retornou dados válidos. Mantendo fallback.');
-            mostrarToast('Aviso', 'Dados financeiros indisponíveis. A mostrar valores de fallback.', 'alerta');
         }
     } catch (erro) {
         console.error('❌ Erro financeiro:', erro);
-        mostrarToast('Erro', 'Falha ao carregar dados financeiros.', 'erro');
     }
 }
 		
