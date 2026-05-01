@@ -1250,7 +1250,7 @@
             
             <div class="charts" style="grid-template-columns: 1fr 1fr;">
                 <div class="chart-container">
-                    <div class="chart-title">Evolução Financeira</div>
+                    <div class="chart-title">Evolução de Receitas e Despesas</div>
                     <canvas id="evolucaoFinanceiraChart"></canvas>
                 </div>
                 <div class="chart-container">
@@ -1270,7 +1270,7 @@
             </div>
             
             <div class="table-container">
-                <h3>Processos em Curso</h3>
+                <h3>Candidaturas</h3>
                 <table>
                     <thead><tr><th>Processo</th><th>Etapa</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Acções</th></tr></thead>
                     <tbody id="tabela-processos"></tbody>
@@ -1619,10 +1619,10 @@
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
     const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbyImQpTQfq5XBLENiFnSms1DbWLEgSh935XUroEzvcKs78Z6B8XrNfpDbq3NVs5jIo/exec';
+	const CANDIDATURAS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmddNGXvdBjU8VZfng30uunDK4OHArVURLz2tyIcJkZ4IMJqxZZEYxZM-yvSSlc6o6Ww/exec';
     let isAuthenticated = false;
     let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
     let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
-
     let tarefas = JSON.parse(localStorage.getItem('sg_tarefas')) || [];
     let contatos = JSON.parse(localStorage.getItem('sg_contatos')) || [];
     let processos = JSON.parse(localStorage.getItem('sg_processos')) || [];
@@ -1631,7 +1631,7 @@
     let atas = JSON.parse(localStorage.getItem('sg_atas')) || [];
     let relatoriosPlanos = JSON.parse(localStorage.getItem('sg_relatorios_planos')) || [];
     let acessos = JSON.parse(localStorage.getItem('sg_acessos')) || [];
-
+	let candidaturas = [];
     let kpisVisiveis = JSON.parse(localStorage.getItem('sg_kpis')) || ['tarefas', 'prazos', 'reunioes', 'deliberacoes'];
 
     // Estado do calendário
@@ -2143,9 +2143,10 @@ async function carregarReunioesCalendario() {
         if (acoes.length === 0) carregarAcoes(); 
     }
     if (pagina === 'apoio-direcao') { 
-        atualizarCardsResumo(); 
-        inicializarGraficosResumo(); 
-    }
+    atualizarCardsResumo(); 
+    inicializarGraficosResumo();
+    if (candidaturas.length === 0) carregarCandidaturas();
+}
     if (pagina === 'relatorios' && relatoriosPlanos.length === 0) carregarRelatoriosPlanos();
     if (pagina === 'seguranca' && acessos.length === 0) carregarAcessos();
 }
@@ -3206,16 +3207,42 @@ async function exportarRelatoriosPDF() {
     btn.disabled = false;
   }
 }
+
+async function carregarCandidaturas() {
+    const tbody = document.getElementById('tabela-processos'); // id da tabela "Processos em Curso"
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">A carregar...</td></tr>';
+
+    try {
+        const resposta = await fetch(CANDIDATURAS_GAS_URL + '?action=getCandidates');
+        const dados = await resposta.json();
+        if (dados.success && dados.candidates) {
+            candidaturas = dados.candidates;
+            const ultimas10 = candidaturas.slice(-10).reverse(); // mais recentes primeiro
+            tbody.innerHTML = ultimas10.map(c => `
+                <tr>
+                    <td>${c.nome || '—'}</td>
+                    <td>${c.telefone || '—'}</td>
+                    <td>${c.email || '—'}</td>
+                    <td><span class="status pendente">${c.status || 'Recebida'}</span></td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhuma candidatura</td></tr>';
+        }
+    } catch (erro) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Erro ao carregar</td></tr>';
+    }
+}
 	
-    // Inicialização principal
-        // ===== INICIALIZAÇÃO PRINCIPAL (SUBSTITUIR TUDO DAQUI ATÉ AO FIM) =====
+// ===== INICIALIZAÇÃO PRINCIPAL =====
     function inicializarSistema() {
         aplicarPermissoes();
         inicializarNotificacoes();
         inicializarGraficos();
         carregarTarefas();
         carregarContatos();
-        carregarProcessos();
+        carregarCandidaturas();
         carregarAcoes();
         carregarEventos();
         carregarAtas();
