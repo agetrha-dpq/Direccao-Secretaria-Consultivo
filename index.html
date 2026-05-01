@@ -1622,7 +1622,42 @@
 const CANDIDATURAS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmddNGXvdBjU8VZfng30uunDK4OHArVURLz2tyIcJkZ4IMJqxZZEYxZM-yvSSlc6o6Ww/exec';
 const MEMBROS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwkAAbyTFC8wvyd3RozC6eXzu36VPbTvy9g02Sj4058eRl0SZZRlmRtjoQOscJ_fek1kA/exec';
 const FINANCEIRO_GAS_URL = 'https://script.google.com/macros/s/AKfycbxN3yGz_oTMzxB-6_PvQtsZQmYftTltqWwWg9lEx_XHacpUnZx_tKzEEVrfrTzsKRlWwQ/exec';
-let isAuthenticated = false;
+// ===== FUNÇÕES AUXILIARES PARA O GAS FINANCEIRO (modo GET, sem autenticação) =====
+async function fazerRequisicaoFinanceira(acao, dados = {}) {
+    try {
+        const params = new URLSearchParams({ action: acao, ...dados });
+        const resposta = await fetch(`${FINANCEIRO_GAS_URL}?${params}`);
+        return await resposta.json();
+    } catch (error) {
+        console.error(`Erro ao buscar ${acao}:`, error);
+        return { success: false, message: 'Erro de conexão' };
+    }
+}
+
+// Arrays globais para guardar os dados financeiros
+let transacoesFinanceiras = [];
+let facturasFinanceiras = [];
+
+async function carregarTransacoesFinanceiro() {
+    const resultado = await fazerRequisicaoFinanceira('getTransactions');
+    if (resultado.success) {
+        transacoesFinanceiras = resultado.data;
+        console.log(`✅ ${transacoesFinanceiras.length} transações financeiras carregadas`);
+    } else {
+        console.warn('⚠️ Falha ao carregar transações financeiras');
+    }
+}
+
+async function carregarFacturasFinanceiro() {
+    const resultado = await fazerRequisicaoFinanceira('getInvoices');
+    if (resultado.success) {
+        facturasFinanceiras = resultado.data;
+        console.log(`✅ ${facturasFinanceiras.length} faturas financeiras carregadas`);
+    } else {
+        console.warn('⚠️ Falha ao carregar faturas financeiras');
+    }
+}
+	let isAuthenticated = false;
 let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
 
 // Função segura para ler localStorage
