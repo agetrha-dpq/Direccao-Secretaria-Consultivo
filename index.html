@@ -2989,16 +2989,34 @@ async function exportarVisaoGeralPDF() {
     let heightLeft = imgHeight;
     let position = 10;
 
-    pdf.setFontSize(18);
-    pdf.setTextColor(26, 78, 142);
-    pdf.text('Visão Geral - Secretaria-Geral AGETRHA', 105, 15, { align: 'center' });
-    position = 25;
+    // ===== CABEÇALHO =====
+    const data = new Date();
+    const dataFormatada = data.toLocaleDateString('pt-PT') + ' às ' + data.toLocaleTimeString('pt-PT');
+    const departamento = currentUser.role === 'presidente' ? 'Direcção Geral' :
+                         currentUser.role === 'secretario' ? 'Secretaria-Geral' : 'Departamento';
+    const nomeUtilizador = currentUser.nome || 'Utilizador';
+
+    pdf.setFontSize(20);
+    pdf.setTextColor(26, 78, 142); // cor primária
+    pdf.text('RELATÓRIO DE RESUMO VISÃO GERAL - AGETRHA', 105, 15, { align: 'center' });
+
+    pdf.setFontSize(11);
+    pdf.setTextColor(108, 117, 125); // cinza
+    pdf.text(departamento + ' - Gerado por: ' + nomeUtilizador, 105, 22, { align: 'center' });
+    pdf.text('Gerado em: ' + dataFormatada, 105, 27, { align: 'center' });
+
+    // Linha separadora
+    pdf.setDrawColor(26, 78, 142);
+    pdf.setLineWidth(0.5);
+    pdf.line(10, 30, 200, 30);
+
+    position = 35;
 
     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
 
     while (heightLeft >= 0) {
-      position = heightLeft - imgHeight + 25;
+      position = heightLeft - imgHeight + 35;
       pdf.addPage();
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
@@ -3012,7 +3030,7 @@ async function exportarVisaoGeralPDF() {
     btn.disabled = false;
   }
 }
-
+	
 async function exportarRelatoriosPDF() {
   const btn = document.getElementById('btn-exportar-relatorio');
   const originalText = btn.innerHTML;
@@ -3031,16 +3049,33 @@ async function exportarRelatoriosPDF() {
     let heightLeft = imgHeight;
     let position = 10;
 
-    pdf.setFontSize(18);
+    // ===== CABEÇALHO =====
+    const data = new Date();
+    const dataFormatada = data.toLocaleDateString('pt-PT') + ' às ' + data.toLocaleTimeString('pt-PT');
+    const departamento = currentUser.role === 'presidente' ? 'Direcção Geral' :
+                         currentUser.role === 'secretario' ? 'Secretaria-Geral' : 'Departamento';
+    const nomeUtilizador = currentUser.nome || 'Utilizador';
+
+    pdf.setFontSize(20);
     pdf.setTextColor(26, 78, 142);
-    pdf.text('Relatórios e Planos - Secretaria-Geral AGETRHA', 105, 15, { align: 'center' });
-    position = 25;
+    pdf.text('RELATÓRIO DE RESUMO RELATÓRIOS / PLANOS - AGETRHA', 105, 15, { align: 'center' });
+
+    pdf.setFontSize(11);
+    pdf.setTextColor(108, 117, 125);
+    pdf.text(departamento + ' - Gerado por: ' + nomeUtilizador, 105, 22, { align: 'center' });
+    pdf.text('Gerado em: ' + dataFormatada, 105, 27, { align: 'center' });
+
+    pdf.setDrawColor(26, 78, 142);
+    pdf.setLineWidth(0.5);
+    pdf.line(10, 30, 200, 30);
+
+    position = 35;
 
     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
 
     while (heightLeft >= 0) {
-      position = heightLeft - imgHeight + 25;
+      position = heightLeft - imgHeight + 35;
       pdf.addPage();
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
