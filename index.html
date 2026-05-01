@@ -1058,13 +1058,13 @@
         <div class="login-modal-body">
             <div style="text-align: center; margin-bottom: 25px;">
                 <h3 style="color: var(--primary); margin-bottom: 8px;">Secretaria-Geral</h3>
-                <p style="color: var(--gray); font-size: 14px;">AGETRHA - Gestão Administrativa</p>
+                <p style="color: var(--gray); font-size: 14px;">Gestão Administrativa - AGETRHA</p>
             </div>
             <form id="login-form" onsubmit="return false;">
                 <div class="login-form-group">
                     <label for="login-password"><i class="fas fa-key"></i> Senha de Acesso</label>
                     <input type="password" id="login-password" class="login-form-control" placeholder="Digite a senha" autocomplete="off" required>
-                    <small style="display:block; margin-top:5px; color:var(--gray);">Presidentes da Direção Nacional | Consultores | Secretário Gerais</small>
+                    <small style="display:block; margin-top:5px; color:var(--gray);">Direção Nacional | Dep. Consultivo | Secretaria</small>
                 </div>
                 <div id="login-error-message" class="login-error-message"><i class="fas fa-exclamation-circle"></i> <span id="login-error-text"></span></div>
                 <div id="login-success-message" class="login-success-message"><i class="fas fa-check-circle"></i> Autenticação bem-sucedida!</div>
@@ -1605,6 +1605,17 @@
 <div id="modal-pesquisa" class="modal"><div class="modal-content"><div class="modal-header"><h2>Resultados da Pesquisa</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body" id="resultados-pesquisa"></div></div></div>
 <div id="modal-kpis" class="modal"><div class="modal-content"><div class="modal-header"><h2>Personalizar KPIs</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body" id="kpis-opcoes"></div><div class="modal-footer"><button class="btn btn-primary" id="btn-salvar-kpis">Salvar</button></div></div></div>
 
+<!-- Modal de Boas-Vindas -->
+<div id="modal-boas-vindas" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 450px; text-align: center;">
+        <div style="padding: 40px 30px;">
+            <div id="boas-vindas-icone" style="font-size: 60px; margin-bottom: 15px;">👋</div>
+            <h2 id="boas-vindas-titulo" style="color: var(--primary); margin-bottom: 10px;"></h2>
+            <p id="boas-vindas-nota" style="color: var(--gray); font-size: 14px;"></p>
+        </div>
+    </div>
+</div>
+	
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
     const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbyImQpTQfq5XBLENiFnSms1DbWLEgSh935XUroEzvcKs78Z6B8XrNfpDbq3NVs5jIo/exec';
@@ -1665,47 +1676,85 @@ function formatarData(dataISO) {
         return { success: true, valid: false }; 
     }
     async function fazerLogin() {
-  console.log('fazerLogin foi chamada');
-  const senha = document.getElementById('login-password').value.trim();
-  if (!senha) {
-    mostrarErroLogin('Insira a senha');
-    return;
-  }
-
-  try {
-    const formData = new FormData();
-    formData.append('action', 'login');
-    formData.append('senha', senha);
-
-    const resposta = await fetch(AUTH_GAS_URL, {
-      method: 'POST',
-      body: formData   // sem headers personalizados → evita preflight
-    });
-
-    const dados = await resposta.json();
-
-    if (dados.sucesso) {
-      authToken = dados.token;
-      currentUser = { nome: dados.nome, role: dados.role };
-      sessionStorage.setItem('sg_authenticated', 'true');
-      sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
-      sessionStorage.setItem('sg_token', authToken);
-      mostrarSucessoLogin();
-      setTimeout(() => {
-        esconderModalLogin();
-        inicializarSistema();
-      }, 1000);
-    } else {
-      mostrarErroLogin(dados.erro || 'Senha incorreta!');
+    console.log('fazerLogin foi chamada');
+    const senha = document.getElementById('login-password').value.trim();
+    if (!senha) {
+        mostrarErroLogin('Insira a senha');
+        return;
     }
-  } catch (erro) {
-    console.error('Erro ao contactar o servidor:', erro);
-    mostrarErroLogin('Erro de conexão. Verifique a rede.');
-  }
+
+    const btn = document.getElementById('btn-login-submit');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    btn.disabled = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'login');
+        formData.append('senha', senha);
+
+        const resposta = await fetch(AUTH_GAS_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        const dados = await resposta.json();
+
+        if (dados.sucesso) {
+            authToken = dados.token;
+            currentUser = { nome: dados.nome, role: dados.role };
+            sessionStorage.setItem('sg_authenticated', 'true');
+            sessionStorage.setItem('sg_user', JSON.stringify(currentUser));
+            sessionStorage.setItem('sg_token', authToken);
+            mostrarSucessoLogin();
+            esconderModalLogin();
+            mostrarModalBoasVindas(dados.role);
+        } else {
+            mostrarErroLogin(dados.erro || 'Senha incorreta!');
+        }
+    } catch (erro) {
+        console.error('Erro ao contactar o servidor:', erro);
+        mostrarErroLogin('Erro de conexão. Verifique a rede.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }
     function mostrarErroLogin(msg) { document.getElementById('login-error-text').innerText = msg; document.getElementById('login-error-message').style.display = 'block'; document.getElementById('login-success-message').style.display = 'none'; }
     function mostrarSucessoLogin() { document.getElementById('login-error-message').style.display = 'none'; document.getElementById('login-success-message').style.display = 'block'; }
-    
+
+function mostrarModalBoasVindas(role) {
+    const modal = document.getElementById('modal-boas-vindas');
+    const titulo = document.getElementById('boas-vindas-titulo');
+    const nota = document.getElementById('boas-vindas-nota');
+
+    switch (role) {
+        case 'presidente':
+            titulo.innerText = 'BEM-VINDO(A) À DIRECÇÃO NACIONAL.';
+            nota.innerText = 'NOTA: Nível de acesso completo a todas as salas';
+            break;
+        case 'secretario':
+            titulo.innerText = 'BEM-VINDO(A) À SECRETARIA-GERAL.';
+            nota.innerText = 'NOTA: Nível de acesso intermediário.';
+            break;
+        case 'consultor':
+            titulo.innerText = 'BEM-VINDO(A) AO DEPARTAMENTO CONSULTIVO.';
+            nota.innerText = 'NOTA: Nível de acesso para consultas de planos e actividades. Não estão disponíveis todas as salas';
+            break;
+        default:
+            titulo.innerText = 'BEM-VINDO(A)';
+            nota.innerText = '';
+    }
+
+    modal.style.display = 'flex';
+
+    // Após 2 segundos, esconder o modal e iniciar o sistema
+    setTimeout(() => {
+        modal.style.display = 'none';
+        inicializarSistema();
+    }, 2000);
+}
+	
 function verificarSessao() {
   const auth = sessionStorage.getItem('sg_authenticated') === 'true';
   if (auth) {
@@ -2975,7 +3024,7 @@ function filtrarAcoesLocalmente(filtroStatus) {
     function atualizarKPIs() {
         const cardsContainer = document.getElementById('kpi-cards');
         const cardsHtml = {
-            tarefas: `<div class="card"><h3>TAREFAS PENDENTES</h3><div class="value">${tarefas.filter(t => t.status !== 'Concluída').length}</div></div>`,
+            tarefas: `<div class="card"><h3>TAREFAS PENDENTES / EM CURSO</h3><div class="value">${tarefas.filter(t => t.status !== 'Concluída').length}</div></div>`,
             prazos: `<div class="card"><h3>ACÇÕES EM CURSO</h3><div class="value">${acoes.filter(a => a.status === 'Em Curso').length}</div></div>`,
             reunioes: `<div class="card"><h3>REUNIÕES AGENDADAS</h3><div class="value">${reunioesCalendario.length}</div></div>`,
             deliberacoes: `<div class="card"><h3>DELIBERAÇÕES</h3><div class="value">${atas.filter(a => a.natureza === 'Deliberação').length}</div></div>`
