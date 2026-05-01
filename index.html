@@ -2847,8 +2847,29 @@ function fileToBase64(file) {
             deliberacoes: `<div class="card"><h3>DELIBERAÇÕES</h3><div class="value">${atas.filter(a => a.natureza === 'Deliberação').length}</div></div>`
         };
         cardsContainer.innerHTML = kpisVisiveis.map(k => cardsHtml[k] || '').join('');
+		carregarTabelaEventosReunioes();
     }
 
+function carregarTabelaEventosReunioes() {
+  const tbody = document.getElementById('tabela-prazos');
+  if (!tbody) return;
+  // Usa as ações como fonte de dados (têm data, descricao, status)
+  const dados = acoes.length > 0 ? acoes : [];
+  if (dados.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum registo</td></tr>';
+    return;
+  }
+  tbody.innerHTML = dados.slice(0, 10).map(a => `
+    <tr>
+      <td>${formatarData(a.data)}</td>
+      <td>${a.descricao}</td>
+      <td>${a.recorrencia || '—'}</td>
+      <td>${a.responsavel || '—'}</td>
+      <td><span class="status ${a.status.replace(' ', '-')}">${a.status}</span></td>
+    </tr>
+  `).join('');
+}
+	
     function pesquisar(termo) {
         termo = termo.toLowerCase();
         let resultados = [];
