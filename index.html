@@ -1620,6 +1620,7 @@
     // ===== CONFIGURAÇÃO INICIAL =====
     const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbyImQpTQfq5XBLENiFnSms1DbWLEgSh935XUroEzvcKs78Z6B8XrNfpDbq3NVs5jIo/exec';
 	const CANDIDATURAS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmddNGXvdBjU8VZfng30uunDK4OHArVURLz2tyIcJkZ4IMJqxZZEYxZM-yvSSlc6o6Ww/exec';
+	const MEMBROS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwkAAbyTFC8wvyd3RozC6eXzu36VPbTvy9g02Sj4058eRl0SZZRlmRtjoQOscJ_fek1kA/exec';
     let isAuthenticated = false;
     let currentUser = { nome: 'Dr. António Joaquim', role: 'secretario' };
     let notificacoes = JSON.parse(localStorage.getItem('notificacoes_sg')) || [];
@@ -2036,72 +2037,46 @@ function atualizarGraficosTarefas() {
 	
     // Gráficos do Resumo Geral
     function inicializarGraficosResumo() {
-        // Evolução Financeira
-        const ctxFin = document.getElementById('evolucaoFinanceiraChart')?.getContext('2d');
-        if (ctxFin) {
-            if (chartInstances.evolucaoFinanceira) chartInstances.evolucaoFinanceira.destroy();
-            chartInstances.evolucaoFinanceira = new Chart(ctxFin, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr'],
-                    datasets: [
-                        { label: 'Receitas', data: dadosFinanceiros.receitas, borderColor: '#28a745', backgroundColor: 'transparent' },
-                        { label: 'Despesas', data: dadosFinanceiros.despesas, borderColor: '#dc3545', backgroundColor: 'transparent' }
-                    ]
-                }
-            });
-        }
-        
-        // Evolução de Membros
-        const ctxMembros = document.getElementById('evolucaoMembrosChart')?.getContext('2d');
-        if (ctxMembros) {
-            if (chartInstances.evolucaoMembros) chartInstances.evolucaoMembros.destroy();
-            // Dados mockados de evolução
-            chartInstances.evolucaoMembros = new Chart(ctxMembros, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr'],
-                    datasets: [
-                        { label: 'Sócio Efectivo', data: [140, 145, 148, 150], borderColor: '#1a4e8e' },
-                        { label: 'Sócio Aderente', data: [45, 47, 49, 50], borderColor: '#e83e8c' },
-                        { label: 'Sócio Colectivo', data: [28, 29, 30, 30], borderColor: '#fd7e14' },
-                        { label: 'Sócio Honorário', data: [10, 10, 10, 10], borderColor: '#20c997' },
-                        { label: 'Sócio Correspondente', data: [8, 9, 10, 10], borderColor: '#6c757d' }
-                    ]
-                }
-            });
-        }
-        
-        // Pizza Financeiro
-        const ctxPizzaFin = document.getElementById('pizzaFinanceiroChart')?.getContext('2d');
-        if (ctxPizzaFin) {
-            if (chartInstances.pizzaFinanceiro) chartInstances.pizzaFinanceiro.destroy();
-            const totalReceitas = dadosFinanceiros.receitas.reduce((a,b) => a+b, 0);
-            const totalDespesas = dadosFinanceiros.despesas.reduce((a,b) => a+b, 0);
-            chartInstances.pizzaFinanceiro = new Chart(ctxPizzaFin, {
-                type: 'pie',
-                data: {
-                    labels: ['Receitas', 'Despesas'],
-                    datasets: [{ data: [totalReceitas, totalDespesas], backgroundColor: ['#28a745', '#dc3545'] }]
-                }
-            });
-        }
-        
-        // Pizza Membros
-        const ctxPizzaMembros = document.getElementById('pizzaMembrosChart')?.getContext('2d');
-        if (ctxPizzaMembros) {
-            if (chartInstances.pizzaMembros) chartInstances.pizzaMembros.destroy();
-            const categorias = dadosMembros.categorias;
-            chartInstances.pizzaMembros = new Chart(ctxPizzaMembros, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(categorias),
-                    datasets: [{ data: Object.values(categorias), backgroundColor: ['#1a4e8e','#e83e8c','#fd7e14','#20c997','#6c757d'] }]
-                }
-            });
-        }
+    // Evolução de Membros
+    const ctxMembros = document.getElementById('evolucaoMembrosChart')?.getContext('2d');
+    if (ctxMembros) {
+        if (chartInstances.evolucaoMembros) chartInstances.evolucaoMembros.destroy();
+        chartInstances.evolucaoMembros = new Chart(ctxMembros, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr'], // pode tornar dinâmico depois
+                datasets: Object.entries(dadosMembros.categorias).map(([cat, val], i) => ({
+                    label: cat,
+                    data: [val, val, val, val], // mock estático; no futuro usará histórico
+                    borderColor: ['#1a4e8e','#e83e8c','#fd7e14','#20c997','#6c757d'][i % 5],
+                    backgroundColor: 'transparent',
+                    tension: 0.3
+                }))
+            }
+        });
     }
 
+    // Membros por Categoria (pizza)
+    const ctxPizzaMembros = document.getElementById('pizzaMembrosChart')?.getContext('2d');
+    if (ctxPizzaMembros) {
+        if (chartInstances.pizzaMembros) chartInstances.pizzaMembros.destroy();
+        const categorias = dadosMembros.categorias;
+        chartInstances.pizzaMembros = new Chart(ctxPizzaMembros, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(categorias),
+                datasets: [{ 
+                    data: Object.values(categorias), 
+                    backgroundColor: ['#1a4e8e','#e83e8c','#fd7e14','#20c997','#6c757d'] 
+                }]
+            }
+        });
+    }
+
+    // Os gráficos financeiros manterão mockados por enquanto (serão tratados no passo 2.3)
+    const ctxFin = document.getElementById('evolucaoFinanceiraChart')?.getContext('2d');
+    // ... (mantenha o código existente para os financeiros)
+}
     function atualizarCardsResumo() {
         document.getElementById('saldo-actual').innerText = dadosFinanceiros.saldo.toLocaleString() + ' Kz';
         document.getElementById('despesa-total').innerText = dadosFinanceiros.despesaTotal.toLocaleString() + ' Kz';
@@ -2146,6 +2121,7 @@ async function carregarReunioesCalendario() {
     atualizarCardsResumo(); 
     inicializarGraficosResumo();
     if (candidaturas.length === 0) carregarCandidaturas();
+	if (dadosMembros.total === 250) carregarDadosMembros();
 }
     if (pagina === 'relatorios' && relatoriosPlanos.length === 0) carregarRelatoriosPlanos();
     if (pagina === 'seguranca' && acessos.length === 0) carregarAcessos();
@@ -3234,6 +3210,33 @@ async function carregarCandidaturas() {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Erro ao carregar</td></tr>';
     }
 }
+
+async function carregarDadosMembros() {
+    try {
+        const resposta = await fetch(MEMBROS_GAS_URL + '?action=getMembers');
+        const dados = await resposta.json();
+        if (dados.success && dados.members) {
+            // Atualiza a variável global (substitui os dados mockados)
+            dadosMembros.total = dados.members.length;
+            dadosMembros.regulares = dados.members.filter(m => m.status === 'Regular').length;
+            dadosMembros.inadimplentes = dados.members.filter(m => m.status === 'Dívida').length;
+
+            // Atualiza as categorias reais
+            const categorias = {};
+            dados.members.forEach(m => {
+                const cat = m.categoria || 'Não Definida';
+                categorias[cat] = (categorias[cat] || 0) + 1;
+            });
+            dadosMembros.categorias = categorias;
+
+            // Refresca os cards e os gráficos
+            atualizarCardsResumo();
+            inicializarGraficosResumo();
+        }
+    } catch (erro) {
+        console.error('Erro ao carregar dados de membros:', erro);
+    }
+}
 	
 // ===== INICIALIZAÇÃO PRINCIPAL =====
     function inicializarSistema() {
@@ -3243,6 +3246,7 @@ async function carregarCandidaturas() {
         carregarTarefas();
         carregarContatos();
         carregarCandidaturas();
+		carregarDadosMembros();
         carregarAcoes();
         carregarEventos();
         carregarAtas();
