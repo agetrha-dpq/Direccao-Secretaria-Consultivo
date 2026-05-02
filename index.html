@@ -157,30 +157,7 @@
             align-items: center;
             gap: 15px;
         }
-        
-        /* Pesquisa global */
-        .search-box {
-            display: flex;
-            align-items: center;
-            background: #f0f2f5;
-            border-radius: 20px;
-            padding: 5px 15px;
-            margin-right: 20px;
-        }
-        .search-box input {
-            border: none;
-            background: transparent;
-            padding: 8px;
-            width: 200px;
-            outline: none;
-        }
-        .search-box button {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-        }
-        
+                     
         /* ===== SISTEMA DE NOTIFICAÇÕES ===== */
         .notificacoes-container {
             position: relative;
@@ -1104,10 +1081,7 @@
             <strong>SECRETARIA-GERAL - AGETRHA</strong>
         </div>
         <div style="display: flex; align-items: center;">
-            <div class="search-box">
-                <input type="text" id="global-search" placeholder="Pesquisar...">
-                <button id="btn-search"><i class="fas fa-search"></i></button>
-            </div>
+            
             <div class="notificacoes-container">
                 <button id="btn-notificacoes" class="btn-notificacoes"><i class="fas fa-bell"></i><span id="badge-notificacoes" class="badge-notificacoes">0</span></button>
                 <div id="dropdown-notificacoes" class="dropdown-notificacoes">
@@ -3541,8 +3515,6 @@ async function carregarDadosFinanceiros() {
             };
         });
 
-        document.getElementById('btn-search').addEventListener('click', () => pesquisar(document.getElementById('global-search').value));
-        document.getElementById('global-search').addEventListener('keypress', (e) => { if (e.key === 'Enter') pesquisar(e.target.value); });
         document.querySelectorAll('.btn-fechar-modal').forEach(btn => btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none'));
         window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; });
         document.getElementById('btn-logout').addEventListener('click', () => { registrarAcesso(currentUser.nome, 'Logout'); sessionStorage.clear(); location.reload(); });
