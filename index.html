@@ -886,8 +886,11 @@
         .status.concluido, .status.Concluída { background-color: rgba(40, 167, 69, 0.1); color: var(--success); }
         .status.pendente { background-color: rgba(255, 193, 7, 0.1); color: #b58900; }
         .status.em-curso, .status.em-andamento, .status.Em-Curso { background-color: rgba(0, 123, 255, 0.15); color: #0056b3; }
-	.status.atrasado, .status.Vencida { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); }
+		.status.atrasado, .status.Vencida { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); }
         .status.Cancelado { background-color: rgba(108, 117, 125, 0.1); color: var(--gray); }
+		.status.recebida { background-color: rgba(0, 255, 255, 0.15); color: #008b8b; }
+		.status.aprovado { background-color: rgba(40, 167, 69, 0.15); color: #28a745; }
+		.status.arquivado { background-color: rgba(108, 117, 125, 0.15); color: #6c757d; }
 
         /* Natureza badges */
         .natureza-badge {
@@ -3325,7 +3328,7 @@ async function carregarCandidaturas() {
                     <td>${c.nome || '—'}</td>
                     <td>${c.telefone || '—'}</td>
                     <td>${c.email || '—'}</td>
-                    <td><span class="status pendente">${c.status || 'Recebida'}</span></td>
+                    <td><span class="status ${(c.status || 'Recebida').toLowerCase().replace(/ /g, '-')}">${c.status || 'Recebida'}</span></td>
                 </tr>
             `).join('');
         } else {
