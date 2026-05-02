@@ -1696,12 +1696,7 @@ let dadosMembros = lerLocalStorage('sg_membros', {
     // Funções de autenticação
     function mostrarModalLogin() { document.getElementById('login-modal').classList.remove('hidden'); document.body.classList.add('login-active'); }
     function esconderModalLogin() { document.getElementById('login-modal').classList.add('hidden'); document.body.classList.remove('login-active'); }
-    async function validarSenha(senha) { 
-        if (senha === 'presidente') return { success: true, valid: true, role: 'presidente', nome: 'Presidente' }; 
-        if (senha === 'secretario') return { success: true, valid: true, role: 'secretario', nome: 'Dr. António Joaquim' }; 
-        if (senha === 'consultor') return { success: true, valid: true, role: 'consultor', nome: 'Consultor' }; 
-        return { success: true, valid: false }; 
-    }
+   
     async function fazerLogin() {
     console.log('fazerLogin foi chamada');
     const senha = document.getElementById('login-password').value.trim();
@@ -1755,27 +1750,21 @@ function mostrarModalBoasVindas(role) {
     const titulo = document.getElementById('boas-vindas-titulo');
     const nota = document.getElementById('boas-vindas-nota');
 
-    switch (role) {
-        case 'presidente':
-            titulo.innerText = 'BEM-VINDO(A) À DIRECÇÃO NACIONAL.';
-            nota.innerText = 'NOTA: Nível de acesso completo a todas as salas';
-            break;
-        case 'secretario':
-            titulo.innerText = 'BEM-VINDO(A) À SECRETARIA-GERAL.';
-            nota.innerText = 'NOTA: Nível de acesso intermediário.';
-            break;
-        case 'consultor':
-            titulo.innerText = 'BEM-VINDO(A) AO DEPARTAMENTO CONSULTIVO.';
-            nota.innerText = 'NOTA: Nível de acesso para consultas de planos e actividades. Não estão disponíveis todas as salas';
-            break;
-        default:
-            titulo.innerText = 'BEM-VINDO(A)';
-            nota.innerText = '';
-    }
+    // Mapeamento de cargo → texto da saudação
+    const saudacoes = {
+        'presidente': { titulo: 'BEM-VINDO(A) À DIRECÇÃO NACIONAL.', nota: 'NOTA: Nível de acesso completo a todas as salas' },
+        'vice-presidente': { titulo: 'BEM-VINDO(A) À VICE-PRESIDÊNCIA.', nota: 'NOTA: Nível de acesso completo.' },
+        '1º secretário': { titulo: 'BEM-VINDO(A) À SECRETARIA-GERAL.', nota: 'NOTA: Nível de acesso intermediário.' },
+        '2º secretário': { titulo: 'BEM-VINDO(A) À SECRETARIA-GERAL.', nota: 'NOTA: Nível de acesso intermediário.' },
+        '1º consultor(a)': { titulo: 'BEM-VINDO(A) AO DEPARTAMENTO CONSULTIVO.', nota: 'NOTA: Nível de acesso para consultas de planos e actividades. Não estão disponíveis todas as salas' },
+        '2º consultor(a)': { titulo: 'BEM-VINDO(A) AO DEPARTAMENTO CONSULTIVO.', nota: 'NOTA: Nível de acesso para consultas de planos e actividades. Não estão disponíveis todas as salas' }
+    };
+
+    const saudacao = saudacoes[role] || { titulo: 'BEM-VINDO(A)', nota: '' };
+    titulo.innerText = saudacao.titulo;
+    nota.innerText = saudacao.nota;
 
     modal.style.display = 'flex';
-
-    // Após 2 segundos, esconder o modal e iniciar o sistema
     setTimeout(() => {
         modal.style.display = 'none';
         inicializarSistema();
@@ -1823,21 +1812,29 @@ async function fetchGAS(action, extraData = {}, baseUrl = null) {
             link.style.display = 'flex'; 
         }); 
         document.getElementById('user-name').innerText = currentUser.nome; 
-        let roleDisplay = role === 'presidente' ? 'Presidente' : (role === 'consultor' ? 'Consultor' : 'Secretário-Geral');
-        document.getElementById('user-role').innerText = roleDisplay;
-        
-        // Ocultar botões de criar/editar/excluir para consultor
-        if (role === 'consultor') {
-            document.querySelectorAll('.btn-primary, .btn-success, .btn-warning, .btn-danger').forEach(btn => {
-                if (!btn.id.includes('exportar') && !btn.id.includes('view') && !btn.id.includes('print')) {
-                    btn.style.display = 'none';
-                }
-            });
-            // Esconder botões de ação de editar/excluir nas tabelas (será feito dinamicamente na renderização)
-        } else {
-            document.querySelectorAll('.btn-primary, .btn-success, .btn-warning, .btn-danger').forEach(btn => btn.style.display = 'inline-flex');
-        }
+        // Nome visível do cargo
+    const roleMap = {
+        'presidente': 'Presidente',
+        'vice-presidente': 'Vice-Presidente',
+        '1º secretário': '1.º Secretário',
+        '2º secretário': '2.º Secretário',
+        '1º consultor(a)': '1.º Consultor(a)',
+        '2º consultor(a)': '2.º Consultor(a)'
+    };
+    document.getElementById('user-role').innerText = roleMap[role] || role;
+
+    // Apenas consultores (independentemente do número) têm restrições
+    const isConsultor = role.toLowerCase().includes('consultor');
+    if (isConsultor) {
+        document.querySelectorAll('.btn-primary, .btn-success, .btn-warning, .btn-danger').forEach(btn => {
+            if (!btn.id.includes('exportar') && !btn.id.includes('view') && !btn.id.includes('print')) {
+                btn.style.display = 'none';
+            }
+        });
+    } else {
+        document.querySelectorAll('.btn-primary, .btn-success, .btn-warning, .btn-danger').forEach(btn => btn.style.display = 'inline-flex');
     }
+}
 
     // Registrar acesso
     function registrarAcesso(usuario, acao) {
@@ -2252,7 +2249,7 @@ async function carregarReunioesCalendario() {
 tarefas.length = 0;          // esvazia o array existente
 tarefas.push(...resposta);   // preenche com os dados do servidor
 window.tarefas = tarefas;    // mantém compatibilidade com window
-const isConsultor = currentUser.role === 'consultor';
+const isConsultor = currentUser.role.toLowerCase().includes('consultor');
 
   tbody.innerHTML = tarefas.map(t => `
     <tr>
@@ -2368,7 +2365,7 @@ const isConsultor = currentUser.role === 'consultor';
   window.atas = atas;            // mantém compatibilidade)
 atualizarKPIs();
 		
-  const isConsultor = currentUser.role === 'consultor';
+  const isConsultor = currentUser.role.toLowerCase().includes('consultor');
   tbody.innerHTML = atas.map(a => `
     <tr>
       <td>${a.nr}</td>
@@ -2640,7 +2637,7 @@ function fileToBase64(file) {
   window.acoes = acoes;
 atualizarKPIs();
 
-  const isConsultor = currentUser.role === 'consultor';
+  const isConsultor = currentUser.role.toLowerCase().includes('consultor');
   tbody.innerHTML = acoes.map(a => `
     <tr>
       <td>${formatarData(a.data)}</td>
@@ -2797,7 +2794,7 @@ function filtrarAcoesLocalmente(filtroStatus) {
   eventos.push(...resposta);       // preenche com os dados do servidor
   window.eventos = eventos;        // mantém compatibilidade
 		
-  const isConsultor = currentUser.role === 'consultor';
+  const isConsultor = currentUser.role.toLowerCase().includes('consultor');
   tbody.innerHTML = eventos.map(e => `
     <tr>
       <td>${e.nome}</td>
@@ -2919,7 +2916,7 @@ function filtrarAcoesLocalmente(filtroStatus) {
     relatoriosPlanos.length = 0;
   relatoriosPlanos.push(...resposta);
   window.relatoriosPlanos = relatoriosPlanos;
-  const isConsultor = currentUser.role === 'consultor';
+  const isConsultor = currentUser.role.toLowerCase().includes('consultor');
   tbody.innerHTML = relatoriosPlanos.map(r => `
     <tr>
       <td>${r.nr}</td>
@@ -3068,7 +3065,7 @@ function filtrarAcoesLocalmente(filtroStatus) {
   contatos.push(...resposta);        // preenche com os dados do servidor
   window.contatos = contatos;        // mantém compatibilidade
 
-  const isConsultor = currentUser.role === 'consultor';
+  const isConsultor = currentUser.role.toLowerCase().includes('consultor');
   tbody.innerHTML = contatos.map(c => `
     <tr>
       <td>${c.nome}</td>
@@ -3197,8 +3194,17 @@ async function exportarVisaoGeralPDF() {
     // ===== CABEÇALHO =====
     const data = new Date();
     const dataFormatada = data.toLocaleDateString('pt-PT') + ' às ' + data.toLocaleTimeString('pt-PT');
-    const departamento = currentUser.role === 'presidente' ? 'Direcção Geral' :
-                         currentUser.role === 'secretario' ? 'Secretaria-Geral' : 'Departamento';
+
+    // Mapeamento do departamento conforme o cargo
+    const departamentoMap = {
+        'presidente': 'Direcção Nacional',
+        'vice-presidente': 'Vice-Presidência',
+        '1º secretário': 'Secretaria-Geral',
+        '2º secretário': 'Secretaria-Geral',
+        '1º consultor(a)': 'Departamento Consultivo',
+        '2º consultor(a)': 'Departamento Consultivo'
+    };
+    const departamento = departamentoMap[currentUser.role] || currentUser.role;
     const nomeUtilizador = currentUser.nome || 'Utilizador';
 
     pdf.setFontSize(20);
@@ -3257,8 +3263,17 @@ async function exportarRelatoriosPDF() {
     // ===== CABEÇALHO =====
     const data = new Date();
     const dataFormatada = data.toLocaleDateString('pt-PT') + ' às ' + data.toLocaleTimeString('pt-PT');
-    const departamento = currentUser.role === 'presidente' ? 'Direcção Geral' :
-                         currentUser.role === 'secretario' ? 'Secretaria-Geral' : 'Departamento';
+
+    // Mapeamento do departamento conforme o cargo
+    const departamentoMap = {
+        'presidente': 'Direcção Nacional',
+        'vice-presidente': 'Vice-Presidência',
+        '1º secretário': 'Secretaria-Geral',
+        '2º secretário': 'Secretaria-Geral',
+        '1º consultor(a)': 'Departamento Consultivo',
+        '2º consultor(a)': 'Departamento Consultivo'
+    };
+    const departamento = departamentoMap[currentUser.role] || currentUser.role;
     const nomeUtilizador = currentUser.nome || 'Utilizador';
 
     pdf.setFontSize(20);
@@ -3294,7 +3309,7 @@ async function exportarRelatoriosPDF() {
     btn.disabled = false;
   }
 }
-
+	
 // Mapeia qualquer valor de status para a classe CSS correta
 function getStatusCandidaturaClass(status) {
     const s = (status || 'Recebida').toLowerCase().trim();
