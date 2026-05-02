@@ -3312,6 +3312,18 @@ async function exportarRelatoriosPDF() {
   }
 }
 
+// Mapeia qualquer valor de status para a classe CSS correta
+function getStatusCandidaturaClass(status) {
+    const s = (status || 'Recebida').toLowerCase().trim();
+    // Mapeamento explícito – adicione aqui outras variações que a API possa devolver
+    if (s.includes('receb') || s.includes('pendente') || s.includes('nova')) return 'recebida';
+    if (s.includes('aprov') || s.includes('aprovado') || s.includes('admitido')) return 'aprovado';
+    if (s.includes('arq') || s.includes('arquivado') || s.includes('fechado')) return 'arquivado';
+    if (s.includes('recusado') || s.includes('rejeitado')) return 'arquivado'; // exemplo
+    // fallback
+    return 'pendente'; // classe genérica já existente
+}
+	
 async function carregarCandidaturas() {
     const tbody = document.getElementById('tabela-processos'); // id da tabela "Processos em Curso"
     if (!tbody) return;
@@ -3328,7 +3340,7 @@ async function carregarCandidaturas() {
                     <td>${c.nome || '—'}</td>
                     <td>${c.telefone || '—'}</td>
                     <td>${c.email || '—'}</td>
-                    <td><span class="status ${(c.status || 'Recebida').toLowerCase().replace(/ /g, '-')}">${c.status || 'Recebida'}</span></td>
+                    <td><span class="status ${getStatusCandidaturaClass(c.status)}">${c.status || 'Recebida'}</span></td>
                 </tr>
             `).join('');
         } else {
