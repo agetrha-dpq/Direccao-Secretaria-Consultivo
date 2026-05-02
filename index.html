@@ -2082,20 +2082,29 @@ function atualizarGraficosTarefas() {
     // Membros por Categoria (pizza)
     const ctxPizzaMembros = document.getElementById('pizzaMembrosChart')?.getContext('2d');
     if (ctxPizzaMembros) {
-        if (chartInstances.pizzaMembros) chartInstances.pizzaMembros.destroy();
-        const categorias = dadosMembros.categorias;
-        chartInstances.pizzaMembros = new Chart(ctxPizzaMembros, {
-            type: 'pie',
-            data: {
-                labels: Object.keys(categorias),
-                datasets: [{ 
-                    data: Object.values(categorias), 
-                    backgroundColor: ['#1a4e8e','#e83e8c','#fd7e14','#20c997','#6c757d'] 
-                }]
+    if (chartInstances.pizzaMembros) chartInstances.pizzaMembros.destroy();
+    const categorias = dadosMembros.categorias;
+    chartInstances.pizzaMembros = new Chart(ctxPizzaMembros, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(categorias),
+            datasets: [{ 
+                data: Object.values(categorias), 
+                backgroundColor: ['#1a4e8e','#e83e8c','#fd7e14','#20c997','#6c757d'] 
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 12 } }
+                }
             }
-        });
-    }
-
+        }
+    });
+}
     // Evolução de Receitas e Despesas
     const ctxFin = document.getElementById('evolucaoFinanceiraChart')?.getContext('2d');
     if (ctxFin) {
