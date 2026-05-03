@@ -1215,8 +1215,7 @@
         <div id="apoio-direcao-content" style="display: none;">
             <div class="page-title">
                 <h1><i class="fas fa-chart-pie"></i> Resumo Geral</h1>
-                <button class="btn btn-primary" id="btn-novo-processo"><i class="fas fa-plus"></i> Novo Processo</button>
-            </div>
+                </div>
             <div class="cards" id="resumo-cards">
                 <div class="card"><h3>SALDO ACTUAL</h3><div class="value" id="saldo-actual">0 Kz</div></div>
                 <div class="card"><h3>DESPESA TOTAL</h3><div class="value" id="despesa-total">0 Kz</div></div>
@@ -1578,7 +1577,6 @@
 
 <!-- Demais modais existentes -->
 <div id="modal-contato" class="modal"><div class="modal-content"><div class="modal-header"><h2>Novo Contato</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body"><form id="form-contato"><div class="form-group"><label>Nome</label><input type="text" id="contato-nome" class="form-control"></div><div class="form-group"><label>Instituição</label><input type="text" id="contato-instituicao" class="form-control"></div><div class="form-group"><label>Cargo</label><input type="text" id="contato-cargo" class="form-control"></div><div class="form-group"><label>Telefone</label><input type="text" id="contato-telefone" class="form-control"></div><div class="form-group"><label>Email</label><input type="email" id="contato-email" class="form-control"></div></form></div><div class="modal-footer"><button class="btn" onclick="fecharModal('modal-contato')">Cancelar</button><button class="btn btn-primary" id="btn-salvar-contato">Salvar</button></div></div></div>
-<div id="modal-processo" class="modal"><div class="modal-content"><div class="modal-header"><h2>Novo Processo</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body"><form id="form-processo"><div class="form-group"><label>Nome do Processo</label><input type="text" id="processo-nome" class="form-control"></div><div class="form-group"><label>Etapa</label><input type="text" id="processo-etapa" class="form-control"></div><div class="form-group"><label>Responsável</label><input type="text" id="processo-responsavel" class="form-control"></div><div class="form-group"><label>Prazo</label><input type="date" id="processo-prazo" class="form-control"></div></form></div><div class="modal-footer"><button class="btn" onclick="fecharModal('modal-processo')">Cancelar</button><button class="btn btn-primary" id="btn-salvar-processo">Salvar</button></div></div></div>
 <div id="modal-pesquisa" class="modal"><div class="modal-content"><div class="modal-header"><h2>Resultados da Pesquisa</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body" id="resultados-pesquisa"></div></div></div>
 <div id="modal-kpis" class="modal"><div class="modal-content"><div class="modal-header"><h2>Personalizar KPIs</h2><button class="btn-fechar-modal">&times;</button></div><div class="modal-body" id="kpis-opcoes"></div><div class="modal-footer"><button class="btn btn-primary" id="btn-salvar-kpis">Salvar</button></div></div></div>
 
@@ -1652,7 +1650,6 @@ function lerLocalStorage(chave, fallback) {
 let notificacoes = lerLocalStorage('notificacoes_sg', []);
 let tarefas = lerLocalStorage('sg_tarefas', []);
 let contatos = lerLocalStorage('sg_contatos', []);
-let processos = lerLocalStorage('sg_processos', []);
 let acoes = lerLocalStorage('sg_acoes', []);
 let eventos = lerLocalStorage('sg_eventos', []);
 let atas = lerLocalStorage('sg_atas', []);
@@ -3079,34 +3076,8 @@ function filtrarAcoesLocalmente(filtroStatus) {
     </tr>
   `).join('');
 }
-    
-    async function carregarProcessos() {
-  const tbody = document.getElementById('tabela-processos');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">A carregar...</td></tr>';
-
-  const resposta = await fetchGAS('getProcessos');
-  if (resposta.erro) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao carregar processos</td></tr>';
-    return;
-  }
-  const processos = resposta;    // array de processos vindo do GAS
-  window.processos = processos;  // atualiza a variável global
-
-  const isConsultor = currentUser.role === 'consultor';
-  tbody.innerHTML = processos.map(p => `
-    <tr>
-      <td>${p.nome}</td>
-      <td>${p.etapa}</td>
-      <td>${p.responsavel}</td>
-      <td>${p.prazo}</td>
-      <td><span class="status em-curso">${p.status}</span></td>
-      <td>${!isConsultor ? '<button class="action-btn edit"><i class="fas fa-edit"></i></button>' : ''}</td>
-    </tr>
-  `).join('');
-}
-
-    function atualizarKPIs() {
+     
+function atualizarKPIs() {
         const cardsContainer = document.getElementById('kpi-cards');
         const cardsHtml = {
             tarefas: `<div class="card"><h3>TAREFAS PENDENTES / EM CURSO</h3><div class="value">${tarefas.filter(t => t.status !== 'Concluída').length}</div></div>`,
@@ -3514,9 +3485,7 @@ async function carregarDadosFinanceiros() {
         });
 
         document.getElementById('btn-novo-contato').addEventListener('click', () => abrirModalContato(false, null));
-        document.getElementById('btn-novo-processo').addEventListener('click', () => {
-            if (currentUser.role !== 'consultor') document.getElementById('modal-processo').style.display = 'flex';
-        });
+        
         document.getElementById('btn-novo-prazo').addEventListener('click', () => abrirModalAcao(false, null));
 
         document.getElementById('btn-personalizar-kpis').addEventListener('click', () => {
@@ -3563,23 +3532,7 @@ async function carregarDadosFinanceiros() {
         carregarContatos();
     }
 });
-
-        document.getElementById('btn-salvar-processo').addEventListener('click', async () => {
-            if (currentUser.role === 'consultor') return;
-            const processo = {
-                nome: document.getElementById('processo-nome').value,
-                etapa: document.getElementById('processo-etapa').value,
-                responsavel: document.getElementById('processo-responsavel').value,
-                prazo: document.getElementById('processo-prazo').value
-            };
-            const resposta = await fetchGAS('saveProcesso', { processo: processo });
-            if (resposta.sucesso) {
-                mostrarToast('Sucesso', 'Processo criado', 'sucesso');
-                fecharModal('modal-processo');
-                carregarProcessos();
-            }
-        });
-
+        
         document.getElementById('btn-salvar-acao').addEventListener('click', salvarAcao);
         document.getElementById('btn-novo-evento').addEventListener('click', () => abrirModalEvento(false, null));
         document.getElementById('btn-salvar-evento').addEventListener('click', salvarEvento);
