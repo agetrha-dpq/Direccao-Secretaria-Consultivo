@@ -1590,6 +1590,24 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Restrição para Secretários -->
+<div id="modal-restricao-secretario" class="modal">
+    <div class="modal-content" style="max-width: 450px; text-align: center;">
+        <div style="padding: 40px 30px;">
+            <div style="font-size: 70px; color: #ffc107; margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2 style="color: var(--primary); margin-bottom: 20px; font-size: 22px;">Acesso Restrito</h2>
+            <p style="font-size: 16px; color: var(--dark); line-height: 1.5; margin-bottom: 25px;">
+                Caríssimo(a) Secretário(a), você não tem permissão para entrar nesta sala. Consultar a Direcção Nacional.
+            </p>
+            <button class="btn btn-primary" onclick="fecharModal('modal-restricao-secretario')" style="padding: 12px 30px; font-size: 16px;">
+                <i class="fas fa-check"></i> Compreendido
+            </button>
+        </div>
+    </div>
+</div>
 	
 <script>
     // ===== CONFIGURAÇÃO INICIAL =====
@@ -2208,6 +2226,14 @@ async function carregarReunioesCalendario() {
 }
     // Navegação
     function alternarPagina(pagina) {
+    // Verificar restrição para secretários (1º e 2º secretário)
+    if (currentUser.role && currentUser.role.toLowerCase().includes('secretário')) {
+        if (pagina === 'apoio-direcao' || pagina === 'seguranca') {
+            document.getElementById('modal-restricao-secretario').style.display = 'flex';
+            return; // Impede a navegação
+        }
+    }
+
     const secoes = ['visao-geral-content','tarefas-content','atas-content','agenda-content','apoio-direcao-content','relatorios-content','comunicacao-content','contatos-content','seguranca-content'];
     secoes.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
@@ -2222,12 +2248,12 @@ async function carregarReunioesCalendario() {
         if (acoes.length === 0) carregarAcoes(); 
     }
     if (pagina === 'apoio-direcao') { 
-    atualizarCardsResumo(); 
-    inicializarGraficosResumo();
-    if (candidaturas.length === 0) carregarCandidaturas();
-	if (dadosMembros.total === 250) carregarDadosMembros();
-	if (dadosFinanceiros.saldo === 1250000) carregarDadosFinanceiros();
-}
+        atualizarCardsResumo(); 
+        inicializarGraficosResumo();
+        if (candidaturas.length === 0) carregarCandidaturas();
+        if (dadosMembros.total === 250) carregarDadosMembros();
+        if (dadosFinanceiros.saldo === 1250000) carregarDadosFinanceiros();
+    }
     if (pagina === 'relatorios' && relatoriosPlanos.length === 0) carregarRelatoriosPlanos();
     if (pagina === 'seguranca' && acessos.length === 0) carregarAcessos();
 }
