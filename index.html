@@ -2227,7 +2227,7 @@ async function carregarReunioesCalendario() {
     // Navegação
     function alternarPagina(pagina) {
     // Verificar restrição para secretários (1º e 2º secretário)
-    if (currentUser.role && currentUser.role.toLowerCase().includes('secretário')) {
+    if (currentUser.role && /secretári[oa]/i.test(currentUser.role)) {
         if (pagina === 'apoio-direcao' || pagina === 'seguranca') {
             document.getElementById('modal-restricao-secretario').style.display = 'flex';
             return; // Impede a navegação
